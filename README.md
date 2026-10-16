@@ -61,10 +61,17 @@ Sn1per is a next-generation information gathering tool that provides automated, 
 ## Kali/Ubuntu/Debian/Parrot Linux Install
 
 ```
-git clone https://github.com/1N3/Sn1per
+git clone https://github.com/marcarna90/Sn1per
 cd Sn1per
-bash install.sh
+sudo bash install.sh
 ```
+
+The installer deploys the framework to `/usr/share/sniper`, installs core OS
+dependencies, and registers two commands on your `PATH`: **`sniper`** (the
+engine) and **`jarvis`** (the reporting/orchestration layer). Run
+`sudo bash install.sh --no-deps` to deploy files and commands without touching
+OS packages. Kali Linux ships most of the third-party scanners the engine
+calls; see [jarvis/README.md](jarvis/README.md) for the Jarvis layer.
 
 ## AWS AMI (Free Tier) VPS Install
 

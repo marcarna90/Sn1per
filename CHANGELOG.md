@@ -1,4 +1,5 @@
 ## CHANGELOG:
+* Recreated install.sh (was deleted upstream): deploys the framework to /usr/share/sniper, installs core OS deps (apt, tolerant of missing packages), registers 'sniper' and 'jarvis' commands, best-effort Go scanners, with a --no-deps flag and a non-root test hatch
 * Added Jarvis orchestration & reporting layer (jarvis/): zero-dependency HTML/Markdown/JSON report generator (optional PDF) that reads Sn1per loot; auto-runs on Community-edition scans
 * Added Jarvis campaign orchestration: declarative JSON/YAML workflows, sequential phases with parallel tasks, dry-run planner, task-state checkpointing, and an automatic end-of-campaign report ('jarvis-cli run')
 * Added third-party scanner importers to Jarvis: nuclei (JSON/JSONL), Nessus (.nessus), OpenVAS/GVM (XML); findings merged and de-duplicated across sources with a Source column, plus subfinder/amass/httpx attack-surface ingestion
