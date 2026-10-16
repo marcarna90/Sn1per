@@ -11,7 +11,7 @@ LABEL org.label-schema.name='Sn1per - Kali Linux' \
 
 RUN echo "deb http://http.kali.org/kali kali-rolling main contrib non-free" > /etc/apt/sources.list && \
     echo "deb-src http://http.kali.org/kali kali-rolling main contrib non-free" >> /etc/apt/sources.list
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -x \
         && apt -yqq update \
