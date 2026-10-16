@@ -6,7 +6,21 @@
 # pure-stdlib Python package. No root required.
 
 set -euo pipefail
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Resolve symlinks so the launcher finds the real install directory even when
+# invoked via a symlink (install.sh registers /usr/bin/jarvis -> this script).
+SOURCE="${BASH_SOURCE[0]}"
+if command -v readlink >/dev/null 2>&1; then
+  RESOLVED="$(readlink -f "$SOURCE" 2>/dev/null || true)"
+  [ -n "$RESOLVED" ] && SOURCE="$RESOLVED"
+fi
+# Fallback manual resolution if readlink -f was unavailable.
+while [ -L "$SOURCE" ]; do
+  LINKDIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [ "${SOURCE#/}" = "$SOURCE" ] && SOURCE="$LINKDIR/$SOURCE"
+done
+DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
