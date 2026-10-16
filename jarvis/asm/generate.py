@@ -27,6 +27,9 @@ def generate_asm_reports(
     client: str = "",
     executive: bool = True,
     live: bool = False,
+    diff: bool = False,
+    snapshot: bool = True,
+    snapshot_base: str | os.PathLike | None = None,
     engagement: Engagement | None = None,
     surface: AttackSurface | None = None,
 ) -> dict[str, str]:
@@ -55,6 +58,27 @@ def generate_asm_reports(
         enrich_email(surface, root=loot_path, live=live)
         enrich_tls(surface, live=live)
         enrich_typosquat(surface, live=live)
+
+    # Change tracking: diff against the most recent prior snapshot, then
+    # persist the current one so trends accumulate across scans.
+    snap_base = snapshot_base or loot_root
+    if snap_base is not None:
+        from jarvis.asm import diff as diffmod
+
+        if diff:
+            prev_path = diffmod.latest_snapshot(snap_base)
+            if prev_path:
+                try:
+                    surface.extras["diff"] = diffmod.diff_surfaces(
+                        diffmod.load_snapshot(prev_path), surface.to_dict()
+                    )
+                except (OSError, ValueError):
+                    pass
+        if snapshot:
+            try:
+                diffmod.save_snapshot(surface, snap_base)
+            except OSError:
+                pass
 
     out = Path(out_dir).expanduser().resolve()
     out.mkdir(parents=True, exist_ok=True)

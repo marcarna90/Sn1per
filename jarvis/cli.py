@@ -164,6 +164,8 @@ def _cmd_asm(args: argparse.Namespace) -> int:
             client=args.client or "",
             executive=not args.no_executive,
             live=args.live,
+            diff=args.diff,
+            snapshot=not args.no_snapshot,
         )
     except (FileNotFoundError, ValueError) as exc:
         sys.stderr.write(f"[!] {exc}\n")
@@ -314,7 +316,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     asm.add_argument(
         "--live", action="store_true",
-        help="Perform live DNS (SPF/DMARC) and TLS certificate checks on in-scope assets",
+        help="Perform live DNS (SPF/DMARC), TLS certificate and typosquat checks on in-scope assets",
+    )
+    asm.add_argument(
+        "--diff", action="store_true",
+        help="Include a 'changes since last scan' section (vs the most recent snapshot)",
+    )
+    asm.add_argument(
+        "--no-snapshot", action="store_true",
+        help="Do not save a snapshot of this run for future diffs",
     )
     asm.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
     asm.set_defaults(func=_cmd_asm)

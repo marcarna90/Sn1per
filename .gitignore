@@ -10,3 +10,6 @@ jarvis/tests/fixtures/**/reports/*-report.*
 
 # Jarvis scheduled-run log
 jarvis-cron.log
+
+# Jarvis ASM snapshots (continuous-monitoring state, per workspace)
+asm-snapshots/

@@ -177,6 +177,23 @@ one-page **executive** summary for client presentation.
 The posture grade is a 100-point score (penalised per finding severity) mapped
 to A (Excellent) … F (Critical), both overall and for each exposure category.
 
+### Enrichment & continuous monitoring
+
+| Capability | How |
+| --- | --- |
+| **Email auth** (SPF/DMARC) | offline from loot always; live with `--live` (via `dig`) |
+| **TLS** (expired/weak certs) | live certificate checks with `--live` (stdlib `ssl`) |
+| **Brand protection** | look-alike/typosquat watchlist always; registered ones confirmed with `--live` |
+| **Change tracking** | each run snapshots the surface under `<workspace>/asm-snapshots/`; `--diff` adds a "changes since last scan" section (new/resolved exposures, posture delta) |
+
+```bash
+# Full external ASM pass with live checks, trend diff, client branding
+./jarvis-cli asm -w loot/workspace/acme --client "ACME Corp" --live --diff -f html,pdf
+```
+
+`--live` performs active DNS/TLS/typosquat resolution against in-scope assets —
+only run it against targets you are authorised to assess.
+
 ## What it parses
 
 | Loot source | Becomes |

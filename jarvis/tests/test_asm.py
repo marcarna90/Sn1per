@@ -68,7 +68,8 @@ class GenerateTest(unittest.TestCase):
     def test_generates_technical_and_executive(self):
         with tempfile.TemporaryDirectory() as tmp:
             results = generate_asm_reports(
-                FIXTURE, tmp, formats=["html", "md", "json"], client="ACME"
+                FIXTURE, tmp, formats=["html", "md", "json"], client="ACME",
+                snapshot=False,
             )
             for key in ("html", "html_exec", "md", "json"):
                 self.assertIn(key, results)
@@ -84,7 +85,7 @@ class GenerateTest(unittest.TestCase):
     def test_no_executive_flag(self):
         with tempfile.TemporaryDirectory() as tmp:
             results = generate_asm_reports(
-                FIXTURE, tmp, formats=["html"], executive=False
+                FIXTURE, tmp, formats=["html"], executive=False, snapshot=False
             )
             self.assertIn("html", results)
             self.assertNotIn("html_exec", results)

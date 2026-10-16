@@ -259,6 +259,50 @@ def _exposures_by_cat(asm: AttackSurface) -> str:
     return "\n".join(blocks) or '<p class="muted">No exposures identified.</p>'
 
 
+def _diff_section(asm: AttackSurface) -> str:
+    d = asm.extras.get("diff")
+    if not d:
+        return ""
+    posture = d.get("posture", {})
+    delta = posture.get("score_delta", 0)
+    if delta > 0:
+        trend = f'<span style="color:#16a34a">improved +{delta}</span>'
+    elif delta < 0:
+        trend = f'<span style="color:{branding.SEVERITY_COLORS["high"]}">worsened {delta}</span>'
+    else:
+        trend = '<span class="muted">unchanged</span>'
+    exp = d.get("exposures", {})
+    ast = d.get("assets", {})
+
+    def exp_list(items, label, color):
+        if not items:
+            return ""
+        rows = "".join(
+            f"<tr><td>{_sev_badge(i['severity'])}</td><td>{escape(i['title'])}</td>"
+            f'<td class="mono">{escape(i["asset"]) or "&mdash;"}</td></tr>'
+            for i in items[:50]
+        )
+        return (f'<h3 style="color:{color}">{escape(label)} ({len(items)})</h3>'
+                "<table><thead><tr><th>Severity</th><th>Exposure</th><th>Asset</th>"
+                f"</tr></thead><tbody>{rows}</tbody></table>")
+
+    since = escape(d.get("previous_at", "")) or "previous scan"
+    summary = (
+        f'<p>Since <b>{since}</b>: posture {trend} '
+        f'(score {posture.get("score_before", "?")} &rarr; {posture.get("score_after", "?")}'
+        + (f', grade {escape(posture.get("grade_change",""))}' if posture.get("grade_change") else "")
+        + f'). New assets: <b>{ast.get("added_count",0)}</b>, removed: '
+        f'<b>{ast.get("removed_count",0)}</b>. New exposures: '
+        f'<b>{exp.get("added_count",0)}</b>, resolved: <b>{exp.get("removed_count",0)}</b>.</p>'
+    )
+    return (
+        '<section><h2>Changes since last scan</h2>' + summary
+        + exp_list(exp.get("added", []), "New exposures", branding.SEVERITY_COLORS["high"])
+        + exp_list(exp.get("removed", []), "Resolved exposures", "#16a34a")
+        + "</section>"
+    )
+
+
 def _typosquat_section(asm: AttackSurface) -> str:
     data = asm.extras.get("typosquat")
     if not data:
@@ -313,6 +357,7 @@ def render_html(asm: AttackSurface, executive: bool = False) -> str:
             _header(asm, subtitle)
             + _grade_block(asm)
             + _kpis(asm)
+            + _diff_section(asm)
             + '<section><h2>Posture by category</h2>' + _category_bars(asm) + "</section>"
             + '<section><h2>Top risks</h2>' + _top_risks(asm) + "</section>"
         )
@@ -323,6 +368,7 @@ def render_html(asm: AttackSurface, executive: bool = False) -> str:
         _header(asm, subtitle)
         + _grade_block(asm)
         + _kpis(asm)
+        + _diff_section(asm)
         + '<section><h2>Posture by category</h2>' + _category_bars(asm) + "</section>"
         + '<section><h2>Exposures</h2>' + _exposures_by_cat(asm) + "</section>"
         + _typosquat_section(asm)
