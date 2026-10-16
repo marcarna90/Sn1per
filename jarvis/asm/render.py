@@ -134,6 +134,10 @@ td{{border-bottom:1px solid var(--line);padding:7px 9px;vertical-align:top}}
 .track{{background:var(--line);border-radius:999px;height:12px;overflow:hidden}}
 .fill{{height:100%;border-radius:999px}}
 .muted{{color:var(--muted)}} .rem{{color:var(--muted);font-size:12.5px;margin-top:4px;font-style:italic}}
+ul.cols{{columns:3;list-style:none;padding:0;margin:8px 0 0;font-size:12.5px}}
+ul.cols li{{padding:1px 0;break-inside:avoid}}
+summary{{cursor:pointer;font-weight:600;margin-top:8px}}
+code{{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}}
 footer{{color:var(--muted);font-size:12px;text-align:center;margin-top:26px}}
 @media(max-width:720px){{.kpis{{grid-template-columns:repeat(2,1fr)}}.catbar{{grid-template-columns:120px 1fr 44px}}}}
 @media print{{body{{background:#fff}}section,.kpi,.grade{{break-inside:avoid}}}}
@@ -255,6 +259,42 @@ def _exposures_by_cat(asm: AttackSurface) -> str:
     return "\n".join(blocks) or '<p class="muted">No exposures identified.</p>'
 
 
+def _typosquat_section(asm: AttackSurface) -> str:
+    data = asm.extras.get("typosquat")
+    if not data:
+        return ""
+    registered = data.get("registered", [])
+    watchlist = data.get("watchlist", {})
+    total = sum(len(v) for v in watchlist.values())
+    if not total:
+        return ""
+    reg_html = ""
+    if registered:
+        items = "".join(f'<li class="mono">{escape(d)}</li>' for d in registered)
+        reg_html = (
+            f'<h3 style="color:{branding.SEVERITY_COLORS["medium"]}">'
+            f"Registered look-alikes ({len(registered)})</h3>"
+            f'<ul class="cols">{items}</ul>'
+        )
+    elif data.get("checked_live"):
+        reg_html = '<p class="muted">No generated look-alike currently resolves.</p>'
+    else:
+        reg_html = ('<p class="muted">Watchlist only — run with <code>--live</code> '
+                    "to check which look-alikes are registered.</p>")
+
+    blocks = []
+    for apex, cands in sorted(watchlist.items()):
+        lis = "".join(f'<li class="mono">{escape(c)}</li>' for c in cands)
+        blocks.append(
+            f"<details><summary>{escape(apex)} — {len(cands)} look-alikes</summary>"
+            f'<ul class="cols">{lis}</ul></details>'
+        )
+    return (
+        '<section><h2>Brand protection — look-alike domains</h2>'
+        + reg_html + "".join(blocks) + "</section>"
+    )
+
+
 def _doc(title: str, body: str) -> str:
     return f"""<!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -285,6 +325,7 @@ def render_html(asm: AttackSurface, executive: bool = False) -> str:
         + _kpis(asm)
         + '<section><h2>Posture by category</h2>' + _category_bars(asm) + "</section>"
         + '<section><h2>Exposures</h2>' + _exposures_by_cat(asm) + "</section>"
+        + _typosquat_section(asm)
         + '<section><h2>Asset inventory</h2>' + _inventory(asm) + "</section>"
     )
     return _doc(f"{branding.NAME} ASM — {asm.name}", body)

@@ -171,6 +171,9 @@ class AttackSurface:
     client: str = ""
     assets: list[Asset] = field(default_factory=list)
     exposures: list[Exposure] = field(default_factory=list)
+    # Flexible slot for enrichment data that does not fit the core schema
+    # (e.g. the typosquat look-alike watchlist). Included in to_dict().
+    extras: dict[str, Any] = field(default_factory=dict)
 
     # --- asset views ------------------------------------------------------
     def assets_by_kind(self) -> dict[str, list[Asset]]:
@@ -235,4 +238,5 @@ class AttackSurface:
             "posture": self.posture(),
             "assets": [a.__dict__ for a in self.assets],
             "exposures": [e.__dict__ for e in self.exposures],
+            "extras": self.extras,
         }
