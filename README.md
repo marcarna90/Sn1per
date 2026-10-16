@@ -117,17 +117,31 @@ To install Sn1per using an AWS EC2 instance:
 
 ### Kali Linux-based Sn1per
 
-1. Run the Docker Compose file
+1. Build the image
 
     ```bash
-    sudo docker compose up
+    sudo docker compose build
     ```
 
-1. Run the container
+2. Run an **interactive** container (this is how you use it)
 
     ```bash
-    sudo docker run -it sn1per-kali-linux /bin/bash
+    sudo docker compose run --rm kali-linux /bin/bash
+    #   then, inside the container:
+    #     sniper -t <TARGET> -w <WORKSPACE>
+    #     jarvis asm -w /usr/share/sniper/loot/workspace/<WORKSPACE> --client "<CLIENT>"
     ```
+
+> **`kali-linux exited with code 0` is normal.** `docker compose up` runs the
+> image's default command (`sniper`, which just prints help) once and exits —
+> it is a CLI tool image, not a long-running service. Use `docker compose run`
+> (above) for an interactive shell.
+
+The compose file bind-mounts **`./loot` to `/usr/share/sniper/loot`**, so scans
+and reports written inside the container appear on the host under
+`./loot/workspace/<WORKSPACE>/reports/` — the simplest way to get reports onto
+the host. You can still use `jarvis export` (zip / `--serve`) from inside the
+container too.
 
 ### BlackArch-based Sn1per
 

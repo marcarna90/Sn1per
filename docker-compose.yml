@@ -1,5 +1,3 @@
-version: '3.9'
-
 x-logging: &default-logging
   options:
     max-size: "40m"
@@ -9,6 +7,16 @@ x-logging: &default-logging
 services:
   kali-linux:
     container_name: kali-linux
+    image: sn1per-jarvis:kali
     build:
       context: .
       dockerfile: Dockerfile
+    logging: *default-logging
+    # Keep STDIN/TTY open so 'docker compose run' gives an interactive shell.
+    stdin_open: true
+    tty: true
+    # Persist loot + reports to the host so they survive the container and can
+    # be opened directly. Reports land under ./loot/workspace/<ws>/reports/ on
+    # the host. (This is the simplest "get reports onto the host" path.)
+    volumes:
+      - ./loot:/usr/share/sniper/loot
