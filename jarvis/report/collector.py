@@ -13,6 +13,7 @@ import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from jarvis.report.importers import collect_extra_vulnerabilities
 from jarvis.report.model import Engagement, Host, OsintFinding, Port, Vulnerability
 from jarvis.report.severity import normalize
 
@@ -180,7 +181,6 @@ def _attach_os_and_web(root: Path, hosts: dict[str, Host]) -> None:
 # --------------------------------------------------------------------------
 def _parse_vulns(root: Path) -> list[Vulnerability]:
     vulns: list[Vulnerability] = []
-    seen: set[tuple[str, str, str]] = set()
     for path in sorted(root.rglob("sc0pe-*.txt")):
         if _VULN_SKIP.search(path.name):
             continue
@@ -195,10 +195,6 @@ def _parse_vulns(root: Path) -> list[Vulnerability]:
             # Sn1per modules replace '<' with the non-standard '&lh;' entity
             # before writing loot; restore it for clean display.
             evidence = evidence.replace("&lh;", "<")[:_MAX_EVIDENCE]
-            dedupe = (severity, name.lower(), location.lower())
-            if dedupe in seen:
-                continue
-            seen.add(dedupe)
             vulns.append(
                 Vulnerability(
                     severity=severity,
@@ -208,6 +204,19 @@ def _parse_vulns(root: Path) -> list[Vulnerability]:
                 )
             )
     return vulns
+
+
+def _dedupe_vulns(vulns: list[Vulnerability]) -> list[Vulnerability]:
+    """Drop duplicate findings across all sources (sc0pe + importers)."""
+    seen: set[tuple[str, str, str]] = set()
+    out: list[Vulnerability] = []
+    for v in vulns:
+        key = (v.severity, v.name.lower().strip(), v.location.lower().strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(v)
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -229,6 +238,14 @@ def _parse_subdomains(root: Path) -> list[str]:
             if line not in seen:
                 seen.add(line)
                 found.append(line)
+    # Also fold in raw subdomain-enumeration output when present.
+    for pattern in ("subfinder-*.txt", "amass-*.txt", "httpx-*.txt", "subdomains-*.txt"):
+        for path in sorted(domains_dir.glob(pattern)):
+            for line in _nonempty_lines(path):
+                token = line.split()[0] if line.split() else line
+                if token and token not in seen:
+                    seen.add(token)
+                    found.append(token)
     return found[:_MAX_SUBDOMAINS]
 
 
@@ -280,7 +297,11 @@ def collect(loot_root: str | os.PathLike, name: str | None = None) -> Engagement
     _attach_os_and_web(root, hosts)
 
     engagement.hosts = sorted(hosts.values(), key=lambda h: (h.ip or h.target))
-    engagement.vulnerabilities = _parse_vulns(root)
+    # Combine Sn1per's own sc0pe findings with native third-party scanner
+    # output (nuclei / Nessus / OpenVAS), then dedupe across all sources.
+    engagement.vulnerabilities = _dedupe_vulns(
+        _parse_vulns(root) + collect_extra_vulnerabilities(root)
+    )
     engagement.subdomains = _parse_subdomains(root)
     engagement.osint = _parse_osint(root)
     engagement.notes = _read_notes(root)

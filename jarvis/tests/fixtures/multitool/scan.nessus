@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+  <Report name="Demo">
+    <ReportHost name="10.20.0.4">
+      <ReportItem port="443" svc_name="www" protocol="tcp" severity="4" pluginID="12345" pluginName="OpenSSL Heartbleed">
+        <synopsis>The remote service is affected by an information disclosure vulnerability.</synopsis>
+        <risk_factor>Critical</risk_factor>
+      </ReportItem>
+      <ReportItem port="22" svc_name="ssh" protocol="tcp" severity="2" pluginID="10881" pluginName="SSH Protocol Versions Supported">
+        <synopsis>Enumerates SSH protocol versions.</synopsis>
+        <risk_factor>Medium</risk_factor>
+      </ReportItem>
+      <ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information">
+        <synopsis>Informational scan metadata.</synopsis>
+      </ReportItem>
+    </ReportHost>
+  </Report>
+</NessusClientData_v2>

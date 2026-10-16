@@ -60,11 +60,12 @@ def _findings_table(engagement: Engagement) -> str:
             f"<tr><td>{_sev_badge(v.severity)}</td>"
             f"<td>{escape(v.name)}</td>"
             f'<td class="mono wrap">{loc}</td>'
-            f'<td class="mono wrap">{ev}</td></tr>'
+            f'<td class="mono wrap">{ev}</td>'
+            f'<td class="src">{escape(v.source)}</td></tr>'
         )
     return (
         '<table class="data"><thead><tr><th>Severity</th><th>Finding</th>'
-        "<th>Location</th><th>Evidence</th></tr></thead><tbody>"
+        "<th>Location</th><th>Evidence</th><th>Source</th></tr></thead><tbody>"
         + "".join(rows)
         + "</tbody></table>"
     )
@@ -214,6 +215,7 @@ table.data th {{ text-align: left; color: var(--muted); font-weight: 600; border
 table.data td {{ border-bottom: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }}
 .badge {{ display:inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }}
 .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }}
+.src {{ color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }}
 .wrap-cell, td.wrap {{ word-break: break-word; max-width: 360px; }}
 .muted {{ color: var(--muted); }}
 .bar-row {{ display: grid; grid-template-columns: 90px 1fr 40px; align-items: center; gap: 10px; margin: 7px 0; }}

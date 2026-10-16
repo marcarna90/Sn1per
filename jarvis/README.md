@@ -126,9 +126,15 @@ after every phase.
 | `nmap/nmap-*.xml` | Hosts, open ports, services, OS, MAC |
 | `nmap/ports-*.txt` | Fallback port list when no XML is present |
 | `vulnerabilities/sc0pe-*.txt` | Findings (`severity, name, location, evidence`) |
-| `domains/*-sorted.txt` | Attack surface (subdomains / targets) |
+| `*nuclei*.json` / `.jsonl` | nuclei findings (native JSON output) |
+| `*.nessus` | Nessus/Tenable findings |
+| OpenVAS/GVM XML report | OpenVAS findings |
+| `domains/*-sorted.txt`, `subfinder-*`, `amass-*`, `httpx-*` | Attack surface (subdomains / targets) |
 | `osint/*` | OSINT summary |
 | `notes/notes.txt` | Scope / engagement notes |
+
+Findings from every source are merged and de-duplicated; each row keeps a
+**Source** column so you can see which tool produced it.
 
 Risk scoring mirrors Sn1per's own sc0pe formula
 (`critical×5 + high×4 + medium×3 + low×2 + info×1`) so the numbers line up.

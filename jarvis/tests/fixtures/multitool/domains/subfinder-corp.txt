@@ -1,0 +1,3 @@
+api.corp.example
+dev.corp.example
+vpn.corp.example

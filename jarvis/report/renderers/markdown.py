@@ -45,12 +45,12 @@ def render(engagement: Engagement) -> str:
     a("## Findings")
     a("")
     if engagement.vulnerabilities:
-        a("| Severity | Finding | Location | Evidence |")
-        a("| --- | --- | --- | --- |")
+        a("| Severity | Finding | Location | Evidence | Source |")
+        a("| --- | --- | --- | --- | --- |")
         for v in engagement.vulnerabilities_sorted():
             a(
                 f"| {v.severity.capitalize()} | {_esc(v.name)} | "
-                f"{_esc(v.location)} | {_esc(v.evidence)} |"
+                f"{_esc(v.location)} | {_esc(v.evidence)} | {_esc(v.source)} |"
             )
     else:
         a("_No vulnerabilities were parsed from the loot directory._")

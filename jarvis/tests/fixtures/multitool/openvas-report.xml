@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<get_reports_response status="200" status_text="OK">
+  <report>
+    <results>
+      <result>
+        <host>10.20.0.9</host>
+        <port>445/tcp</port>
+        <nvt><name>SMB Signing not required</name></nvt>
+        <threat>High</threat>
+        <description>SMB signing is disabled on the remote host.</description>
+      </result>
+      <result>
+        <host>10.20.0.9</host>
+        <port>80/tcp</port>
+        <nvt><name>TRACE method enabled</name></nvt>
+        <threat>Low</threat>
+        <description>The HTTP TRACE method is enabled.</description>
+      </result>
+    </results>
+  </report>
+</get_reports_response>

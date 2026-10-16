@@ -1,0 +1,3 @@
+{"template-id":"CVE-2021-44228","info":{"name":"Apache Log4j RCE (Log4Shell)","severity":"critical","description":"JNDI lookup leads to RCE"},"host":"https://10.20.0.4","matched-at":"https://10.20.0.4/api","extracted-results":["jndi:ldap"]}
+{"template-id":"tech-detect","info":{"name":"Nginx version disclosure","severity":"info"},"host":"http://10.20.0.4","matched-at":"http://10.20.0.4/"}
+{"template-id":"exposed-git","info":{"name":"Exposed .git directory","severity":"medium"},"host":"https://10.20.0.4","matched-at":"https://10.20.0.4/.git/config"}
