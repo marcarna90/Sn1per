@@ -230,12 +230,22 @@ backend is available) — the deliverable the Community edition otherwise leaves
 to the paid version. It has **no external dependencies** (Python 3 standard
 library only) and runs automatically at the end of a Community-edition scan.
 
+It can also orchestrate a whole engagement from one declarative **campaign**
+file (JSON/YAML): ordered workflow phases, parallel tasks, dry-run planning,
+and an automatic report at the end.
+
 ```
 [*] GENERATE A REPORT FROM A WORKSPACE
 ./jarvis-cli report -w /usr/share/sniper/loot/workspace/<WORKSPACE_ALIAS>
 
 [*] CHOOSE FORMATS + OUTPUT DIRECTORY
 ./jarvis-cli report -w loot/workspace/<WORKSPACE_ALIAS> -o ./out -f html,md,json,pdf
+
+[*] PREVIEW A CAMPAIGN (DRY-RUN, NO SCANS LAUNCHED)
+./jarvis-cli run jarvis/examples/campaign.json --dry-run
+
+[*] RUN A CAMPAIGN (requires Sn1per + root)
+./jarvis-cli run campaign.yaml
 ```
 
 See [jarvis/README.md](jarvis/README.md) for full documentation.

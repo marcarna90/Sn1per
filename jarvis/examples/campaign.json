@@ -1,0 +1,24 @@
+{
+  "campaign": "Demo Lab Engagement",
+  "workspace": "demo-lab",
+  "targets": [
+    "web01.demo.lab",
+    "mail.demo.lab"
+  ],
+  "workflow": [
+    {
+      "mode": "discover"
+    },
+    {
+      "mode": "normal",
+      "options": { "osint": true, "recon": true }
+    },
+    {
+      "mode": "webscan",
+      "parallel": 2
+    }
+  ],
+  "report": {
+    "formats": ["html", "md", "json", "pdf"]
+  }
+}

@@ -1,0 +1,22 @@
+# Example Jarvis campaign (YAML form; requires PyYAML).
+# Equivalent to campaign.json. Run with:
+#   ./jarvis-cli run jarvis/examples/campaign.yaml --dry-run
+campaign: "Demo Lab Engagement"
+workspace: "demo-lab"
+
+targets:
+  - web01.demo.lab
+  - mail.demo.lab
+
+workflow:
+  # Phases run top-to-bottom; tasks within a phase run in parallel.
+  - mode: discover
+  - mode: normal
+    options:
+      osint: true
+      recon: true
+  - mode: webscan
+    parallel: 2
+
+report:
+  formats: [html, md, json, pdf]

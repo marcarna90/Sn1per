@@ -24,6 +24,62 @@ def _print_banner() -> None:
     sys.stderr.write(BANNER + "\n")
 
 
+def _cmd_run(args: argparse.Namespace) -> int:
+    from jarvis.orchestrate.config import CampaignError, load_campaign
+    from jarvis.orchestrate.executor import DryRunExecutor, SniperExecutor
+    from jarvis.orchestrate.runner import run_campaign
+
+    try:
+        campaign = load_campaign(args.campaign)
+    except CampaignError as exc:
+        sys.stderr.write(f"[!] {exc}\n")
+        return 2
+
+    if not args.quiet:
+        _print_banner()
+
+    workspace_dir = Path(args.loot_base).expanduser() / campaign.workspace
+    mode_label = "DRY-RUN" if args.dry_run else "LIVE"
+    sys.stderr.write(
+        f"[*] Campaign: {campaign.name}  |  workspace: {campaign.workspace}  |  mode: {mode_label}\n"
+    )
+    sys.stderr.write(
+        f"[*] {len(campaign.targets)} target(s), {len(campaign.workflow)} phase(s)\n"
+    )
+    if not args.dry_run:
+        sys.stderr.write(f"[*] Loot/report directory: {workspace_dir}\n")
+
+    def progress(tr) -> None:
+        marker = {"done": "+", "failed": "!", "skipped": "-"}.get(tr.status, "*")
+        if args.dry_run:
+            print(f"[{marker}] would run: {' '.join(tr.task.command)}")
+        else:
+            print(f"[{marker}] {tr.task.id}: {tr.status} ({tr.note or 'ok'})")
+
+    executor = DryRunExecutor() if args.dry_run else SniperExecutor()
+    result = run_campaign(
+        campaign,
+        executor=executor,
+        workspace_dir=None if args.dry_run else str(workspace_dir),
+        generate_report=not args.no_report,
+        sniper_bin=args.sniper_bin,
+        progress=progress,
+    )
+
+    sys.stderr.write(
+        f"[=] {len(result.tasks)} task(s) executed, {len(result.failed)} failed\n"
+    )
+    for fmt in VALID_FORMATS:
+        if fmt in result.reports:
+            print(f"[+] {fmt.upper():5s} -> {result.reports[fmt]}")
+    if "pdf_error" in result.reports:
+        sys.stderr.write(f"[i] PDF skipped: {result.reports['pdf_error']}\n")
+    if "error" in result.reports:
+        sys.stderr.write(f"[i] Report skipped: {result.reports['error']}\n")
+
+    return 1 if result.failed else 0
+
+
 def _cmd_report(args: argparse.Namespace) -> int:
     workspace = Path(args.workspace).expanduser()
     if not workspace.is_dir():
@@ -95,6 +151,32 @@ def build_parser() -> argparse.ArgumentParser:
     )
     report.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
     report.set_defaults(func=_cmd_report)
+
+    run = sub.add_parser(
+        "run",
+        help="Run a campaign (ordered Sn1per workflow) from a JSON/YAML file",
+    )
+    run.add_argument("campaign", help="Path to a campaign file (.json / .yaml / .yml)")
+    run.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the execution plan without launching any scans",
+    )
+    run.add_argument(
+        "--loot-base",
+        default="/usr/share/sniper/loot/workspace",
+        help="Base directory holding workspace loot (default: %(default)s)",
+    )
+    run.add_argument(
+        "--sniper-bin", default="sniper", help="Path to the sniper binary (default: sniper)"
+    )
+    run.add_argument(
+        "--no-report",
+        action="store_true",
+        help="Do not generate a report at the end of the campaign",
+    )
+    run.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
+    run.set_defaults(func=_cmd_run)
 
     return parser
 
