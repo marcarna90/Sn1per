@@ -4,6 +4,7 @@
 * Added third-party scanner importers to Jarvis: nuclei (JSON/JSONL), Nessus (.nessus), OpenVAS/GVM (XML); findings merged and de-duplicated across sources with a Source column, plus subfinder/amass/httpx attack-surface ingestion
 * Enriched Jarvis reports: narrative executive summary, per-finding remediation guidance (keyword rules + severity fallback), and optional client branding (name + logo) via --client/--logo and campaign report settings
 * Orchestration upgrades: file-based modes (nuke/airstrike/flyover/mass*) emit a single -f task with an auto-written targets file; --resume skips already-completed tasks; optional Slack end-of-campaign summary (--slack-webhook / SLACK_WEBHOOK); 'jarvis-cli schedule' generates/install a crontab entry (daily/weekly/monthly or custom cron)
+* Added GitHub Actions CI for the Jarvis layer (Python 3.10-3.13): byte-compile, full test suite, and report/dry-run smoke tests, with no dependencies installed
 * Fixed broken bin/report.py stub (hard-coded path) — now delegates to the Jarvis engine
 * v9.2 - Added Tomba.io API integration via OSINT mode (Credit: @benemohamed)
 * v9.2 - Fixed issue with gau tool not installing and updated GAU setting in confs

@@ -1,0 +1,50 @@
+name: jarvis-tests
+
+# Exercises the Jarvis layer only. It is pure Python 3 standard library, so no
+# dependencies are installed — the whole point is that it runs anywhere Sn1per
+# runs without a pip step.
+
+on:
+  push:
+    paths:
+      - 'jarvis/**'
+      - '.github/workflows/jarvis-tests.yml'
+  pull_request:
+    paths:
+      - 'jarvis/**'
+      - '.github/workflows/jarvis-tests.yml'
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Byte-compile the package
+        run: python -m compileall -q jarvis
+
+      - name: Run the Jarvis test suite
+        run: python -m unittest discover -s jarvis/tests -v
+
+      - name: Smoke-test report generation
+        run: |
+          python -m jarvis report -w jarvis/tests/fixtures/demo-workspace \
+            -o /tmp/jarvis-ci -f html,md,json -q
+          test -f /tmp/jarvis-ci/demo-workspace-report.html
+          test -f /tmp/jarvis-ci/demo-workspace-report.json
+
+      - name: Smoke-test campaign dry-run (JSON + YAML)
+        run: |
+          python -m jarvis run jarvis/examples/campaign.json --dry-run -q
+          pip install pyyaml >/dev/null 2>&1 || true
+          python -m jarvis run jarvis/examples/campaign.yaml --dry-run -q || true

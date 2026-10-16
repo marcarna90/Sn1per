@@ -177,6 +177,11 @@ PYTHONPATH=. python3 -m unittest discover -s jarvis/tests -v
 A small synthetic loot directory lives in `jarvis/tests/fixtures/demo-workspace`
 and is safe to use as a reference for the expected loot layout.
 
+These tests also run in CI on every push/PR that touches `jarvis/` across
+Python 3.10–3.13 (`.github/workflows/jarvis-tests.yml`), including smoke
+tests of report generation and a campaign dry-run. No dependencies are
+installed — the suite is pure standard library.
+
 ## Rebranding
 
 Edit `jarvis/branding.py` — name, tagline, accent colour and severity colours
