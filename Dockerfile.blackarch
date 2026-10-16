@@ -3,7 +3,20 @@ FROM docker.io/blackarchlinux/blackarch:latest
 # Upgrade system
 RUN pacman -Syu --noconfirm
 
-# Install sn1per from official repository
+# Install sn1per from the official repository (brings the third-party toolchain)
 RUN pacman -Sy sn1per --noconfirm
 
-CMD ["sn1per"]
+# Overlay THIS fork (Sn1per engine + Jarvis reporting/ASM layer) so the image
+# ships Jarvis. Override at build time with --build-arg REPO_BRANCH=main ...
+ARG REPO_URL=https://github.com/marcarna90/Sn1per.git
+ARG REPO_BRANCH=claude/great-ptolemy-dp0gxj
+
+RUN pacman -Sy --noconfirm git python rsync \
+    && ln -sf /usr/bin/python /usr/bin/python3
+RUN git clone --branch "$REPO_BRANCH" --single-branch "$REPO_URL" /opt/sniper-fork \
+    && cd /opt/sniper-fork \
+    && bash install.sh --no-deps
+# --no-deps: BlackArch provides the toolchain via pacman; install.sh here only
+# deploys the fork and registers the 'sniper' and 'jarvis' commands.
+
+CMD ["sniper"]

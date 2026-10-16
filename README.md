@@ -88,6 +88,11 @@ To install Sn1per using an AWS EC2 instance:
 
 [![](https://sn1persecurity.com/images/docker-logo.png)](https://hub.docker.com/r/sn1persecurity/sn1per)
 
+> The Docker images build from **this fork** and therefore include the Jarvis
+> reporting/ASM layer (the `jarvis` command is available inside the container).
+> To build from a different branch/repo, pass build args, e.g.
+> `docker build --build-arg REPO_BRANCH=main -t sn1per .`
+
 ### Kali Linux-based Sn1per
 
 1. Run the Docker Compose file

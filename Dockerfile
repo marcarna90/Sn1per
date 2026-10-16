@@ -2,8 +2,8 @@ FROM docker.io/kalilinux/kali-rolling:latest
 
 LABEL org.label-schema.name='Sn1per - Kali Linux' \
     org.label-schema.description='Automated pentest framework for offensive security experts' \
-    org.label-schema.usage='https://github.com/1N3/Sn1per' \
-    org.label-schema.url='https://github.com/1N3/Sn1per' \
+    org.label-schema.usage='https://github.com/marcarna90/Sn1per' \
+    org.label-schema.url='https://github.com/marcarna90/Sn1per' \
     org.label-schema.vendor='https://sn1persecurity.com' \
     org.label-schema.schema-version='1.0' \
     org.label-schema.docker.cmd.devel='docker run --rm -ti xer0dayz/sniper' \
@@ -25,10 +25,17 @@ RUN sed -i 's/systemctl status ${PG_SERVICE}/service ${PG_SERVICE} status/g' /us
 
 WORKDIR /usr/src/app
 
-RUN apt --yes install git bash
-RUN git clone https://github.com/1N3/Sn1per.git \
+# Build from this fork (Sn1per engine + Jarvis reporting/ASM layer) rather than
+# upstream 1N3/Sn1per, so the image ships Jarvis. Override at build time with
+#   docker build --build-arg REPO_BRANCH=main ...
+ARG REPO_URL=https://github.com/marcarna90/Sn1per.git
+ARG REPO_BRANCH=claude/great-ptolemy-dp0gxj
+
+RUN apt --yes install git bash rsync python3
+RUN git clone --branch "$REPO_BRANCH" --single-branch "$REPO_URL" Sn1per \
     && cd Sn1per \
-    && ./install.sh \
-    && sniper -u force
+    && bash install.sh
+# NOTE: 'sniper -u force' is intentionally omitted — it would pull the default
+# branch over the install dir and could drop the Jarvis layer.
 
 CMD ["sniper"]
