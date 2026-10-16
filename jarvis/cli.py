@@ -163,6 +163,7 @@ def _cmd_asm(args: argparse.Namespace) -> int:
             name=args.name,
             client=args.client or "",
             executive=not args.no_executive,
+            live=args.live,
         )
     except (FileNotFoundError, ValueError) as exc:
         sys.stderr.write(f"[!] {exc}\n")
@@ -310,6 +311,10 @@ def build_parser() -> argparse.ArgumentParser:
     asm.add_argument(
         "--no-executive", action="store_true",
         help="Do not also produce the one-page executive report",
+    )
+    asm.add_argument(
+        "--live", action="store_true",
+        help="Perform live DNS (SPF/DMARC) and TLS certificate checks on in-scope assets",
     )
     asm.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
     asm.set_defaults(func=_cmd_asm)

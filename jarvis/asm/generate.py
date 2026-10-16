@@ -26,6 +26,7 @@ def generate_asm_reports(
     name: str | None = None,
     client: str = "",
     executive: bool = True,
+    live: bool = False,
     engagement: Engagement | None = None,
     surface: AttackSurface | None = None,
 ) -> dict[str, str]:
@@ -45,6 +46,13 @@ def generate_asm_reports(
         if engagement is None:
             engagement = collect(loot_root, name=name)
         surface = build_attack_surface(engagement, client=client)
+        # Email-auth and TLS enrichment: offline from loot always, live opt-in.
+        from jarvis.asm.email_security import enrich_email
+        from jarvis.asm.tls import enrich_tls
+
+        loot_path = Path(loot_root) if loot_root else None
+        enrich_email(surface, root=loot_path, live=live)
+        enrich_tls(surface, live=live)
 
     out = Path(out_dir).expanduser().resolve()
     out.mkdir(parents=True, exist_ok=True)
