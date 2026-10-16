@@ -26,6 +26,24 @@ _VALUE_FLAGS = {
     "config": "-c",
 }
 
+# Sn1per modes that operate on a file of targets (-f) rather than a single
+# target (-t). For these the orchestrator emits ONE task per phase.
+FILE_BASED_MODES = {
+    "airstrike",
+    "nuke",
+    "flyover",
+    "massweb",
+    "masswebscan",
+    "massvulnscan",
+    "massportscan",
+}
+
+
+def is_file_based(mode: str, override: bool | None = None) -> bool:
+    if override is not None:
+        return override
+    return mode.lower() in FILE_BASED_MODES
+
 
 def build_sniper_command(
     target: str,
@@ -33,10 +51,19 @@ def build_sniper_command(
     workspace: str,
     options: dict[str, Any] | None = None,
     sniper_bin: str = "sniper",
+    targets_file: str = "",
 ) -> list[str]:
-    """Return the argv list for one orchestrated Sn1per scan."""
+    """Return the argv list for one orchestrated Sn1per scan.
+
+    When ``targets_file`` is given the command uses ``-f <file>`` (for the
+    file-based modes such as nuke/airstrike/mass*); otherwise it uses
+    ``-t <target>``.
+    """
     options = options or {}
-    cmd: list[str] = [sniper_bin, "-t", target, "-m", mode]
+    if targets_file:
+        cmd: list[str] = [sniper_bin, "-f", targets_file, "-m", mode]
+    else:
+        cmd = [sniper_bin, "-t", target, "-m", mode]
     if workspace:
         cmd += ["-w", workspace]
 

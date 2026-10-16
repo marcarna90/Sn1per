@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -64,10 +65,14 @@ def _cmd_run(args: argparse.Namespace) -> int:
         generate_report=not args.no_report,
         sniper_bin=args.sniper_bin,
         progress=progress,
+        resume=args.resume,
     )
 
+    skipped = sum(1 for t in result.tasks if t.status == "skipped")
     sys.stderr.write(
-        f"[=] {len(result.tasks)} task(s) executed, {len(result.failed)} failed\n"
+        f"[=] {len(result.tasks)} task(s): "
+        f"{len(result.tasks) - len(result.failed) - skipped} done, "
+        f"{skipped} skipped, {len(result.failed)} failed\n"
     )
     for fmt in VALID_FORMATS:
         if fmt in result.reports:
@@ -77,7 +82,61 @@ def _cmd_run(args: argparse.Namespace) -> int:
     if "error" in result.reports:
         sys.stderr.write(f"[i] Report skipped: {result.reports['error']}\n")
 
+    webhook = args.slack_webhook or os.environ.get("SLACK_WEBHOOK", "")
+    if webhook and not args.dry_run:
+        from jarvis.orchestrate.notifications import send_slack, summarize
+
+        ok = send_slack(webhook, summarize(result))
+        sys.stderr.write(
+            f"[i] Slack notification {'sent' if ok else 'failed'}\n"
+        )
+
     return 1 if result.failed else 0
+
+
+def _cmd_schedule(args: argparse.Namespace) -> int:
+    from jarvis.orchestrate.schedule import build_cron_line, cron_expression
+
+    repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        cron_expression(args.cadence, args.cron)  # validate early
+        line = build_cron_line(
+            campaign_path=args.campaign,
+            repo_dir=repo_dir,
+            loot_base=args.loot_base,
+            cadence=args.cadence,
+            custom_cron=args.cron,
+            sniper_bin=args.sniper_bin,
+        )
+    except ValueError as exc:
+        sys.stderr.write(f"[!] {exc}\n")
+        return 2
+
+    if args.install:
+        import subprocess
+
+        try:
+            current = subprocess.run(
+                ["crontab", "-l"], capture_output=True, text=True
+            ).stdout
+        except (FileNotFoundError, OSError):
+            sys.stderr.write("[!] 'crontab' not available; printing the line instead.\n")
+            print(line)
+            return 1
+        if line in current:
+            sys.stderr.write("[i] Schedule already installed.\n")
+            return 0
+        new = (current.rstrip("\n") + "\n" + line + "\n").lstrip("\n")
+        proc = subprocess.run(["crontab", "-"], input=new, text=True)
+        if proc.returncode == 0:
+            sys.stderr.write("[+] Installed crontab entry:\n")
+            print(line)
+            return 0
+        sys.stderr.write("[!] Failed to install crontab entry.\n")
+        return 1
+
+    print(line)
+    return 0
 
 
 def _cmd_report(args: argparse.Namespace) -> int:
@@ -179,8 +238,44 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not generate a report at the end of the campaign",
     )
+    run.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip tasks already marked done in the workspace campaign state",
+    )
+    run.add_argument(
+        "--slack-webhook",
+        default=None,
+        help="Slack incoming-webhook URL for an end-of-campaign summary "
+        "(or set SLACK_WEBHOOK)",
+    )
     run.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
     run.set_defaults(func=_cmd_run)
+
+    sched = sub.add_parser(
+        "schedule",
+        help="Print (or install) a crontab line that re-runs a campaign periodically",
+    )
+    sched.add_argument("campaign", help="Path to the campaign file")
+    sched.add_argument(
+        "--cadence",
+        choices=["daily", "weekly", "monthly"],
+        default="daily",
+        help="Schedule cadence (default: daily)",
+    )
+    sched.add_argument(
+        "--cron", default=None, help="Custom 5-field cron expression (overrides --cadence)"
+    )
+    sched.add_argument(
+        "--loot-base",
+        default="/usr/share/sniper/loot/workspace",
+        help="Base directory holding workspace loot (default: %(default)s)",
+    )
+    sched.add_argument("--sniper-bin", default="sniper", help="Path to the sniper binary")
+    sched.add_argument(
+        "--install", action="store_true", help="Append the line to the current user's crontab"
+    )
+    sched.set_defaults(func=_cmd_schedule)
 
     return parser
 

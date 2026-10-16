@@ -7,3 +7,6 @@ __pycache__/
 # Generated reports (keep test fixtures, ignore real output)
 loot/workspace/*/reports/*-report.*
 jarvis/tests/fixtures/**/reports/*-report.*
+
+# Jarvis scheduled-run log
+jarvis-cron.log

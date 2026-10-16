@@ -10,8 +10,10 @@ from pathlib import Path
 
 from jarvis.orchestrate.config import CampaignError, parse_campaign
 from jarvis.orchestrate.executor import DryRunExecutor, Executor
-from jarvis.orchestrate.model import Task, TaskResult
+from jarvis.orchestrate.model import CampaignResult, Task, TaskResult
+from jarvis.orchestrate.notifications import summarize
 from jarvis.orchestrate.runner import plan, run_campaign
+from jarvis.orchestrate.schedule import build_cron_line, cron_expression
 
 FIXTURE = Path(__file__).parent / "fixtures" / "demo-workspace"
 
@@ -118,6 +120,109 @@ class RunTest(unittest.TestCase):
             data = json.loads(state.read_text(encoding="utf-8"))
             self.assertEqual(data["campaign"], "Demo")
             self.assertFalse(data["dry_run"])
+
+
+class FileBasedModeTest(unittest.TestCase):
+    def test_mass_mode_emits_single_task_with_f_flag(self):
+        c = parse_campaign(
+            {
+                "campaign": "Mass",
+                "workspace": "mass-ws",
+                "targets": ["a.example", "b.example", "c.example"],
+                "workflow": [{"mode": "nuke"}],
+            }
+        )
+        batches = plan(c, workspace_dir="/tmp/loot/mass-ws")
+        self.assertEqual(len(batches), 1)
+        self.assertEqual(len(batches[0]), 1)  # one task, not three
+        task = batches[0][0]
+        self.assertIn("-f", task.command)
+        self.assertNotIn("-t", task.command)
+        self.assertEqual(task.file_targets, ["a.example", "b.example", "c.example"])
+        self.assertTrue(task.targets_file.endswith(".txt"))
+
+    def test_file_targets_written_on_live_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp) / "mass-ws"
+            ws.mkdir()
+            c = parse_campaign(
+                {
+                    "campaign": "Mass",
+                    "workspace": "mass-ws",
+                    "targets": ["a.example", "b.example"],
+                    "workflow": [{"mode": "airstrike"}],
+                }
+            )
+            run_campaign(
+                c, executor=_FakeExecutor(), workspace_dir=str(ws), generate_report=False
+            )
+            tfile = ws / "scans" / "jarvis-targets-p0-airstrike.txt"
+            self.assertTrue(tfile.is_file())
+            self.assertEqual(
+                tfile.read_text().split(), ["a.example", "b.example"]
+            )
+
+
+class ResumeTest(unittest.TestCase):
+    def test_resume_skips_completed_tasks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp) / "ws"
+            ws.mkdir()
+            c = parse_campaign(
+                {
+                    "campaign": "R",
+                    "workspace": "ws",
+                    "targets": ["a.example", "b.example"],
+                    "workflow": ["normal"],
+                }
+            )
+            # First run completes everything.
+            r1 = run_campaign(
+                c, executor=_FakeExecutor(), workspace_dir=str(ws), generate_report=False
+            )
+            self.assertEqual(sum(t.status == "done" for t in r1.tasks), 2)
+            # Second run with resume skips both.
+            r2 = run_campaign(
+                c,
+                executor=_FakeExecutor(),
+                workspace_dir=str(ws),
+                generate_report=False,
+                resume=True,
+            )
+            self.assertEqual(sum(t.status == "skipped" for t in r2.tasks), 2)
+            self.assertEqual(sum(t.status == "done" for t in r2.tasks), 0)
+
+
+class NotificationTest(unittest.TestCase):
+    def test_summarize_mentions_counts_and_name(self):
+        res = CampaignResult(campaign="Demo", workspace="ws", dry_run=True)
+        res.tasks = [
+            TaskResult(task=Task("t1", 0, "normal", "a", "ws"), status="done"),
+            TaskResult(task=Task("t2", 0, "normal", "b", "ws"), status="failed"),
+        ]
+        text = summarize(res)
+        self.assertIn("Demo", text)
+        self.assertIn("1 done", text)
+        self.assertIn("1 failed", text)
+
+
+class ScheduleTest(unittest.TestCase):
+    def test_cron_expression_cadences(self):
+        self.assertEqual(cron_expression("daily"), "0 2 * * *")
+        self.assertEqual(cron_expression(None, "*/30 * * * *"), "*/30 * * * *")
+        with self.assertRaises(ValueError):
+            cron_expression("hourly")
+
+    def test_build_cron_line(self):
+        line = build_cron_line(
+            campaign_path="campaign.json",
+            repo_dir="/opt/sniper",
+            loot_base="/usr/share/sniper/loot/workspace",
+            cadence="weekly",
+        )
+        self.assertTrue(line.startswith("0 2 * * 0 "))
+        self.assertIn("jarvis-cli run", line)
+        self.assertIn("--resume", line)
 
 
 if __name__ == "__main__":

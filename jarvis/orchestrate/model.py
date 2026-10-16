@@ -53,7 +53,7 @@ class Campaign:
 
 @dataclass
 class Task:
-    """A single unit of execution: one mode against one target."""
+    """A unit of execution: one mode against one target (or a target file)."""
 
     id: str
     phase_index: int
@@ -62,6 +62,9 @@ class Task:
     workspace: str
     options: dict[str, Any] = field(default_factory=dict)
     command: list[str] = field(default_factory=list)
+    # For file-based modes: the -f file path and the targets written into it.
+    targets_file: str = ""
+    file_targets: list[str] = field(default_factory=list)
 
 
 @dataclass

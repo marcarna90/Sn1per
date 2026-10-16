@@ -115,6 +115,27 @@ live environment), while a real run uses the subprocess-backed executor.
 Campaign state is checkpointed to `<workspace>/scans/jarvis-campaign-state.json`
 after every phase.
 
+**File-based modes.** `nuke`, `airstrike`, `flyover` and the `mass*` modes
+operate on a *file* of targets. For those phases Jarvis emits a single
+`sniper -f <file>` task (instead of one `-t` task per target) and writes the
+target list to `<workspace>/scans/jarvis-targets-<phase>.txt`. Force this for
+any mode with `options: { file_targets: true }`.
+
+**Resume.** `--resume` reads the workspace campaign state and skips tasks
+already marked `done`, so an interrupted (or scheduled, incremental) campaign
+only runs what is left.
+
+**Notifications.** `--slack-webhook <url>` (or the `SLACK_WEBHOOK` env var)
+posts a one-paragraph summary to Slack when the campaign finishes.
+
+**Scheduling.** `jarvis-cli schedule <campaign> --cadence daily|weekly|monthly`
+prints a crontab line (add `--install` to append it to your crontab).
+Scheduled runs use `--resume` automatically.
+
+```bash
+./jarvis-cli schedule campaign.yaml --cadence weekly --install
+```
+
 ### `run` options
 
 | Flag | Description | Default |
@@ -124,6 +145,8 @@ after every phase.
 | `--loot-base` | Base dir holding workspace loot | `/usr/share/sniper/loot/workspace` |
 | `--sniper-bin` | Path to the `sniper` binary | `sniper` |
 | `--no-report` | Skip the end-of-campaign report | off |
+| `--resume` | Skip tasks already done in the workspace state | off |
+| `--slack-webhook` | Slack webhook for an end-of-campaign summary | `$SLACK_WEBHOOK` |
 
 ## What it parses
 
