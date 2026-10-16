@@ -56,9 +56,14 @@ def _findings_table(engagement: Engagement) -> str:
     for v in engagement.vulnerabilities_sorted():
         loc = escape(v.location) or "&mdash;"
         ev = escape(v.evidence) or "&mdash;"
+        rem = (
+            f'<div class="rem">&#8617; {escape(v.remediation)}</div>'
+            if v.remediation
+            else ""
+        )
         rows.append(
             f"<tr><td>{_sev_badge(v.severity)}</td>"
-            f"<td>{escape(v.name)}</td>"
+            f"<td>{escape(v.name)}{rem}</td>"
             f'<td class="mono wrap">{loc}</td>'
             f'<td class="mono wrap">{ev}</td>'
             f'<td class="src">{escape(v.source)}</td></tr>'
@@ -139,7 +144,7 @@ def _osint_section(engagement: Engagement) -> str:
     )
 
 
-def render(engagement: Engagement) -> str:
+def render(engagement: Engagement, client: str = "", logo_data_uri: str = "") -> str:
     accent = branding.COLOR_ACCENT
     accent_dark = branding.COLOR_ACCENT_DARK
     rating = engagement.risk_rating
@@ -159,6 +164,17 @@ def render(engagement: Engagement) -> str:
             _kpi(len(engagement.vulnerabilities), "Findings"),
             _kpi(engagement.risk_score, "Risk score", accent=True),
         ]
+    )
+
+    logo_html = (
+        f'<img class="logo" src="{escape(logo_data_uri, quote=True)}" alt="logo">'
+        if logo_data_uri
+        else ""
+    )
+    client_html = (
+        f'<div class="client">Prepared for: <b>{escape(client)}</b></div>'
+        if client
+        else ""
     )
 
     return f"""<!doctype html>
@@ -216,6 +232,9 @@ table.data td {{ border-bottom: 1px solid var(--line); padding: 8px 10px; vertic
 .badge {{ display:inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }}
 .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }}
 .src {{ color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }}
+.rem {{ color: var(--muted); font-size: 12.5px; margin-top: 5px; font-style: italic; }}
+.logo {{ max-height: 44px; max-width: 180px; }}
+.client {{ font-size: 13px; color: var(--muted); }}
 .wrap-cell, td.wrap {{ word-break: break-word; max-width: 360px; }}
 .muted {{ color: var(--muted); }}
 .bar-row {{ display: grid; grid-template-columns: 90px 1fr 40px; align-items: center; gap: 10px; margin: 7px 0; }}
@@ -238,8 +257,9 @@ footer {{ color: var(--muted); font-size: 12px; text-align: center; margin-top: 
 <body>
 <div class="wrap">
   <header class="report">
-    <div class="brand">{escape(branding.NAME)}<span>.</span>
+    <div class="brand">{logo_html}{escape(branding.NAME)}<span>.</span>
       <small>{escape(branding.TAGLINE)}</small>
+      {client_html}
     </div>
     <div class="rating">
       Engagement: <b style="background:none;border:0;color:var(--ink);padding:0">{escape(engagement.name)}</b><br>
@@ -252,10 +272,8 @@ footer {{ color: var(--muted); font-size: 12px; text-align: center; margin-top: 
 
   <section>
     <h2>Executive summary</h2>
-    <p>The assessment identified <b>{len(engagement.hosts)}</b> live host(s),
-    <b>{engagement.total_open_ports}</b> open port(s) and
-    <b>{len(engagement.vulnerabilities)}</b> finding(s). The overall risk
-    rating is <b>{escape(rating)}</b>.</p>
+    <p>{escape(engagement.narrative_summary())} The overall risk rating is
+    <b>{escape(rating)}</b>.</p>
     {_severity_bars(engagement)}
   </section>
 

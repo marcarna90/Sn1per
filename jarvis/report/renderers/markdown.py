@@ -27,12 +27,8 @@ def render(engagement: Engagement) -> str:
     # --- Executive summary ------------------------------------------------
     a("## Executive summary")
     a("")
-    a(
-        f"The assessment identified **{len(engagement.hosts)} live host(s)**, "
-        f"**{engagement.total_open_ports} open port(s)** and "
-        f"**{len(engagement.vulnerabilities)} finding(s)**. "
-        f"The overall risk rating is **{engagement.risk_rating}**."
-    )
+    a(f"{engagement.narrative_summary()} The overall risk rating is "
+      f"**{engagement.risk_rating}**.")
     a("")
     a("| Severity | Count |")
     a("| --- | --- |")
@@ -55,6 +51,21 @@ def render(engagement: Engagement) -> str:
     else:
         a("_No vulnerabilities were parsed from the loot directory._")
     a("")
+
+    # --- Remediation ------------------------------------------------------
+    if engagement.vulnerabilities:
+        a("## Remediation guidance")
+        a("")
+        seen: set[tuple[str, str]] = set()
+        for v in engagement.vulnerabilities_sorted():
+            if not v.remediation:
+                continue
+            key = (v.name.lower(), v.remediation)
+            if key in seen:
+                continue
+            seen.add(key)
+            a(f"- **[{v.severity.capitalize()}] {_esc(v.name)}** — {_esc(v.remediation)}")
+        a("")
 
     # --- Hosts ------------------------------------------------------------
     a("## Hosts & services")

@@ -13,6 +13,7 @@ import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from jarvis.report import remediation
 from jarvis.report.importers import collect_extra_vulnerabilities
 from jarvis.report.model import Engagement, Host, OsintFinding, Port, Vulnerability
 from jarvis.report.severity import normalize
@@ -302,6 +303,9 @@ def collect(loot_root: str | os.PathLike, name: str | None = None) -> Engagement
     engagement.vulnerabilities = _dedupe_vulns(
         _parse_vulns(root) + collect_extra_vulnerabilities(root)
     )
+    for v in engagement.vulnerabilities:
+        if not v.remediation:
+            v.remediation = remediation.suggest(v.name, v.location, v.severity)
     engagement.subdomains = _parse_subdomains(root)
     engagement.osint = _parse_osint(root)
     engagement.notes = _read_notes(root)

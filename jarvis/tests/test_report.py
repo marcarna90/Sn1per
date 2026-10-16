@@ -15,6 +15,7 @@ from pathlib import Path
 
 from jarvis.report.collector import collect
 from jarvis.report.generate import generate_reports
+from jarvis.report.remediation import suggest
 from jarvis.report.severity import normalize
 
 FIXTURE = Path(__file__).parent / "fixtures" / "demo-workspace"
@@ -67,6 +68,27 @@ class CollectorTest(unittest.TestCase):
             collect("/nonexistent/path/xyz")
 
 
+class EnrichmentTest(unittest.TestCase):
+    def setUp(self):
+        self.eng = collect(FIXTURE, name="Demo")
+
+    def test_remediation_keyword_match(self):
+        self.assertIn("parameterised", suggest("SQL Injection", "", "high").lower())
+        self.assertIn("ssl", suggest("OpenSSL Heartbleed", "", "critical").lower())
+
+    def test_remediation_severity_fallback(self):
+        text = suggest("Totally unknown finding xyz", "", "critical")
+        self.assertIn("immediate", text.lower())
+
+    def test_every_finding_has_remediation(self):
+        self.assertTrue(all(v.remediation for v in self.eng.vulnerabilities))
+
+    def test_narrative_summary_mentions_counts(self):
+        summary = self.eng.narrative_summary()
+        self.assertIn("2 live host", summary)
+        self.assertIn("critical", summary.lower())
+
+
 class GenerateTest(unittest.TestCase):
     def test_all_text_formats(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -88,6 +110,15 @@ class GenerateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):
                 generate_reports(FIXTURE, tmp, formats=["docx"])
+
+    def test_client_name_and_remediation_in_html(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            results = generate_reports(
+                FIXTURE, tmp, formats=["html"], client="ACME Corp"
+            )
+            html = Path(results["html"]).read_text(encoding="utf-8")
+            self.assertIn("ACME Corp", html)
+            self.assertIn('class="rem"', html)  # remediation rendered
 
     def test_empty_workspace_still_reports(self):
         with tempfile.TemporaryDirectory() as tmp:

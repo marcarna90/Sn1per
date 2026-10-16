@@ -32,6 +32,8 @@ class Phase:
 class ReportSpec:
     formats: list[str] = field(default_factory=lambda: ["html", "md", "json"])
     name: str = ""
+    client: str = ""
+    logo: str = ""
 
 
 @dataclass

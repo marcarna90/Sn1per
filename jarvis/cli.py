@@ -99,6 +99,8 @@ def _cmd_report(args: argparse.Namespace) -> int:
             out_dir=out_dir,
             formats=formats,
             name=args.name,
+            client=args.client or "",
+            logo_path=args.logo,
         )
     except (FileNotFoundError, ValueError) as exc:
         sys.stderr.write(f"[!] {exc}\n")
@@ -149,6 +151,8 @@ def build_parser() -> argparse.ArgumentParser:
     report.add_argument(
         "-n", "--name", default=None, help="Engagement name (default: workspace folder name)"
     )
+    report.add_argument("--client", default=None, help="Client name shown on the report")
+    report.add_argument("--logo", default=None, help="Path to a client logo image (HTML)")
     report.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
     report.set_defaults(func=_cmd_report)
 

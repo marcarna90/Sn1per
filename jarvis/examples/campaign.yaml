@@ -20,3 +20,5 @@ workflow:
 
 report:
   formats: [html, md, json, pdf]
+  client: "ACME Corp"        # optional: shown on the report
+  # logo: /path/to/logo.png  # optional: embedded in the HTML header

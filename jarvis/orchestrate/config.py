@@ -86,6 +86,8 @@ def parse_campaign(data: dict[str, Any]) -> Campaign:
     report = ReportSpec(
         formats=_as_list(report_raw.get("formats")) or ["html", "md", "json"],
         name=str(report_raw.get("name", "")).strip(),
+        client=str(report_raw.get("client", "")).strip(),
+        logo=str(report_raw.get("logo", "")).strip(),
     )
 
     workspace = str(data.get("workspace") or "").strip() or _slug(name)

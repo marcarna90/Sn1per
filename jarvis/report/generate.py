@@ -19,12 +19,32 @@ def _slug(name: str) -> str:
     return safe or "report"
 
 
+def _logo_data_uri(logo_path: str | os.PathLike | None) -> str:
+    """Return a base64 data: URI for an image, or '' if unavailable."""
+    if not logo_path:
+        return ""
+    import base64
+    import mimetypes
+
+    p = Path(logo_path).expanduser()
+    if not p.is_file():
+        return ""
+    mime = mimetypes.guess_type(p.name)[0] or "image/png"
+    try:
+        data = base64.b64encode(p.read_bytes()).decode("ascii")
+    except OSError:
+        return ""
+    return f"data:{mime};base64,{data}"
+
+
 def generate_reports(
     loot_root: str | os.PathLike,
     out_dir: str | os.PathLike,
     formats: list[str] | None = None,
     name: str | None = None,
     engagement: Engagement | None = None,
+    client: str = "",
+    logo_path: str | os.PathLike | None = None,
 ) -> dict[str, str]:
     """Generate the requested report formats.
 
@@ -51,7 +71,9 @@ def generate_reports(
 
     html_content = None
     if "html" in formats or "pdf" in formats:
-        html_content = html_renderer.render(engagement)
+        html_content = html_renderer.render(
+            engagement, client=client, logo_data_uri=_logo_data_uri(logo_path)
+        )
 
     if "html" in formats:
         path = out / f"{base}-report.html"

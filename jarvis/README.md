@@ -63,7 +63,13 @@ the workspace loot.
 | `-o, --out` | Output directory | `<workspace>/reports` |
 | `-f, --format` | Comma list of `html,md,json,pdf` | `html,md,json` |
 | `-n, --name` | Engagement name | workspace folder name |
+| `--client` | Client name shown on the report | — |
+| `--logo` | Path to a client logo image (embedded in HTML) | — |
 | `-q, --quiet` | Suppress the banner | off |
+
+Reports include a **narrative executive summary**, **per-finding remediation
+guidance**, and optional **client branding** (name + logo). In a campaign,
+set these under `report:` (`client`, `logo`, `name`, `formats`).
 
 ## Orchestration (campaigns)
 

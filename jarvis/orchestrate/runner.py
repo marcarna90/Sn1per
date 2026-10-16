@@ -108,6 +108,8 @@ def run_campaign(
                 out_dir=ws_dir / "reports",
                 formats=campaign.report.formats,
                 name=campaign.report.name or campaign.name,
+                client=campaign.report.client,
+                logo_path=campaign.report.logo or None,
             )
         except (FileNotFoundError, ValueError) as exc:
             result.reports = {"error": str(exc)}

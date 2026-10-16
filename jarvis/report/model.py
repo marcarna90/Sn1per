@@ -44,6 +44,7 @@ class Vulnerability:
     location: str = ""  # host or URL the finding applies to
     evidence: str = ""
     source: str = "sc0pe"  # which tool/parser produced it
+    remediation: str = ""  # advisory guidance, filled in during collection
 
     @property
     def weight(self) -> int:
@@ -120,6 +121,58 @@ class Engagement:
     @property
     def total_open_ports(self) -> int:
         return sum(len(h.open_ports) for h in self.hosts)
+
+    @property
+    def most_exposed_host(self) -> Host | None:
+        """Host carrying the most findings (ties broken by open-port count)."""
+        if not self.hosts:
+            return None
+        counts: dict[str, int] = {}
+        for v in self.vulnerabilities:
+            loc = v.location.lower()
+            for h in self.hosts:
+                if (h.ip and h.ip in loc) or (h.target and h.target.lower() in loc):
+                    key = h.ip or h.target
+                    counts[key] = counts.get(key, 0) + 1
+        if not counts:
+            return max(self.hosts, key=lambda h: len(h.open_ports))
+        top_key = max(counts, key=lambda k: counts[k])
+        for h in self.hosts:
+            if (h.ip or h.target) == top_key:
+                return h
+        return None
+
+    def narrative_summary(self) -> str:
+        """A short, deterministic prose summary for the executive section."""
+        counts = self.severity_counts()
+        n_hosts = len(self.hosts)
+        sentences = [
+            f"This engagement covered {n_hosts} live host"
+            f"{'s' if n_hosts != 1 else ''} exposing {self.total_open_ports} "
+            f"open port{'s' if self.total_open_ports != 1 else ''}."
+        ]
+        if self.vulnerabilities:
+            breakdown = ", ".join(
+                f"{counts[s]} {s}" for s in SEVERITY_ORDER if counts[s]
+            )
+            sentences.append(
+                f"Jarvis recorded {len(self.vulnerabilities)} finding"
+                f"{'s' if len(self.vulnerabilities) != 1 else ''} ({breakdown})."
+            )
+            urgent = counts["critical"] + counts["high"]
+            if urgent:
+                sentences.append(
+                    f"{urgent} finding{'s' if urgent != 1 else ''} rated high or "
+                    "critical require prompt attention."
+                )
+            host = self.most_exposed_host
+            if host:
+                sentences.append(
+                    f"The most exposed host is {host.target or host.ip}."
+                )
+        else:
+            sentences.append("No vulnerabilities were recorded in the loot.")
+        return " ".join(sentences)
 
     def vulnerabilities_sorted(self) -> list[Vulnerability]:
         rank = {s: i for i, s in enumerate(SEVERITY_ORDER)}
