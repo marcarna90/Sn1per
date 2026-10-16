@@ -1,0 +1,6 @@
+demo.lab
+web01.demo.lab
+mail.demo.lab
+dev.demo.lab
+staging.demo.lab
+vpn.demo.lab

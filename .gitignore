@@ -1,0 +1,9 @@
+# Python bytecode / caches (Jarvis layer)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Generated reports (keep test fixtures, ignore real output)
+loot/workspace/*/reports/*-report.*
+jarvis/tests/fixtures/**/reports/*-report.*

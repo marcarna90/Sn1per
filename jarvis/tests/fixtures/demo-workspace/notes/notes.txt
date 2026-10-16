@@ -1,0 +1,2 @@
+Engagement authorised under contract DEMO-2024-001.
+Scope: demo.lab and all *.demo.lab hosts in the 10.10.10.0/24 lab range.

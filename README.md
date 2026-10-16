@@ -221,6 +221,25 @@ sniper -u|--update
 - **VULNSCAN:** Launches a OpenVAS vulnerability scan.
 - **MASSVULNSCAN:** Launches a "vulnscan" mode scans on multiple targets specified via the "-f" switch.
 
+## Jarvis — Orchestration & Reporting Layer (Community)
+
+[Jarvis](jarvis/README.md) is an open-source reporting layer bundled with this
+fork. It reads the loot a Sn1per scan produces and generates a polished,
+self-contained **HTML**, **Markdown** and **JSON** report (plus **PDF** when a
+backend is available) — the deliverable the Community edition otherwise leaves
+to the paid version. It has **no external dependencies** (Python 3 standard
+library only) and runs automatically at the end of a Community-edition scan.
+
+```
+[*] GENERATE A REPORT FROM A WORKSPACE
+./jarvis-cli report -w /usr/share/sniper/loot/workspace/<WORKSPACE_ALIAS>
+
+[*] CHOOSE FORMATS + OUTPUT DIRECTORY
+./jarvis-cli report -w loot/workspace/<WORKSPACE_ALIAS> -o ./out -f html,md,json,pdf
+```
+
+See [jarvis/README.md](jarvis/README.md) for full documentation.
+
 ## Help Topics
 
 - [x] [Plugins & Tools](https://github.com/1N3/Sn1per/wiki/Plugins-&-Tools)

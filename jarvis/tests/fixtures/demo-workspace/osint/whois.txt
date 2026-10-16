@@ -1,0 +1,3 @@
+Registrar: Example Registrar Inc.
+Created: 2015-03-11
+Name servers: ns1.demo.lab, ns2.demo.lab

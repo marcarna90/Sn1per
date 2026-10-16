@@ -586,6 +586,19 @@ function loot {
         source $INSTALL_DIR/pro.sh
       fi
     else
+      # + -- --=[ Jarvis Community reporting layer
+      # When Sn1per Professional is not installed, generate an open-source
+      # HTML/Markdown/JSON report from the collected loot so the Community
+      # edition has real deliverables instead of only an upgrade notice.
+      if [[ -f "$INSTALL_DIR/jarvis-cli" ]] && command -v python3 > /dev/null 2>&1; then
+        echo -e "$OKORANGE + -- --=[ Generating Jarvis report...$RESET"
+        "$INSTALL_DIR/jarvis-cli" report -w "$LOOT_DIR" -o "$LOOT_DIR/reports" -f html,md,json -q 2> /dev/null
+        JARVIS_REPORT=$(ls -t "$LOOT_DIR/reports/"*-report.html 2> /dev/null | head -1)
+        if [[ -n "$JARVIS_REPORT" ]] && [[ -f "$JARVIS_REPORT" ]]; then
+          echo -e "$OKBLUE[*]$RESET Jarvis report saved to: $JARVIS_REPORT $OKBLUE[$RESET${OKGREEN}OK${RESET}$OKBLUE]$RESET"
+          sudo $LAST_USER -c $BROWSER "$JARVIS_REPORT" 2> /dev/null > /dev/null &
+        fi
+      fi
       echo -e "$OKBLUE[$RESET${OKRED}i${RESET}$OKBLUE]$RESET ⚡ Upgrade to Sn1per Professional and unlock a world of powerful benefits! 🚀 $RESET"
       echo -e "$OKBLUE[$RESET${OKRED}i${RESET}$OKBLUE]$RESET  $RESET"
       echo -e "$OKBLUE[$RESET${OKRED}i${RESET}$OKBLUE]$RESET 💡 Don't miss out on important updates by using the Community version. $RESET"

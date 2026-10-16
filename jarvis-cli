@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# + -- --=[ Jarvis launcher — orchestration & reporting layer for Sn1per
+#
+# Thin shim so you can run ./jarvis-cli from the repo (or anywhere) without
+# installing anything. It puts the repo root on PYTHONPATH and defers to the
+# pure-stdlib Python package. No root required.
+
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  echo "[!] python3 is required but was not found in PATH." >&2
+  exit 1
+fi
+
+PYTHONPATH="$DIR${PYTHONPATH:+:$PYTHONPATH}" exec "$PYTHON_BIN" -m jarvis "$@"

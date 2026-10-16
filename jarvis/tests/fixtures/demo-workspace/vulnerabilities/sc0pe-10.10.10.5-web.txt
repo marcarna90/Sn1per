@@ -1,0 +1,5 @@
+CRITICAL, Apache 2.4.41 mod_proxy SSRF (CVE-2021-40438), https://10.10.10.5:443/, server: Apache/2.4.41 &lh;response truncated&lh;
+HIGH, MySQL exposed to the network, 10.10.10.5:3306, mysql 5.7.33 banner reachable without TLS
+MEDIUM, Missing HTTP security headers, https://10.10.10.5/, no Content-Security-Policy; no X-Frame-Options
+LOW, SSH weak MAC algorithms offered, 10.10.10.5:22, hmac-md5, hmac-sha1
+INFO, robots.txt exposes admin path, https://10.10.10.5/robots.txt, Disallow: /admin

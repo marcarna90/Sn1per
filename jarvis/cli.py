@@ -1,0 +1,113 @@
+"""Command-line interface for the Jarvis orchestration & reporting layer."""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from jarvis import branding
+from jarvis.report.generate import VALID_FORMATS, generate_reports
+
+BANNER = rf"""
+     _   _    ____  __     _____ ____
+    | | / \  |  _ \ \ \   / /_ _/ ___|
+ _  | |/ _ \ | |_) | \ \ / / | |\___ \
+| |_| / ___ \|  _ <   \ V /  | | ___) |
+ \___/_/   \_\_| \_\   \_/  |___|____/   v{branding.VERSION}
+ {branding.TAGLINE}
+ {branding.ENGINE_CREDIT}
+"""
+
+
+def _print_banner() -> None:
+    sys.stderr.write(BANNER + "\n")
+
+
+def _cmd_report(args: argparse.Namespace) -> int:
+    workspace = Path(args.workspace).expanduser()
+    if not workspace.is_dir():
+        sys.stderr.write(f"[!] Loot directory not found: {workspace}\n")
+        return 2
+
+    out_dir = args.out or (workspace / "reports")
+    formats = [f.strip() for f in args.format.split(",") if f.strip()]
+
+    if not args.quiet:
+        _print_banner()
+        sys.stderr.write(f"[*] Collecting loot from: {workspace}\n")
+
+    try:
+        results = generate_reports(
+            loot_root=workspace,
+            out_dir=out_dir,
+            formats=formats,
+            name=args.name,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        sys.stderr.write(f"[!] {exc}\n")
+        return 2
+
+    for fmt in VALID_FORMATS:
+        if fmt in results:
+            print(f"[+] {fmt.upper():5s} -> {results[fmt]}")
+    if "pdf_error" in results:
+        sys.stderr.write(f"[i] PDF skipped: {results['pdf_error']}\n")
+
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="jarvis",
+        description=f"{branding.LONG_NAME} — {branding.TAGLINE}",
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"{branding.NAME} {branding.VERSION}"
+    )
+    sub = parser.add_subparsers(dest="command", metavar="<command>")
+
+    report = sub.add_parser(
+        "report",
+        help="Generate a report (HTML/Markdown/JSON/PDF) from a Sn1per loot directory",
+    )
+    report.add_argument(
+        "-w",
+        "--workspace",
+        required=True,
+        help="Path to a Sn1per loot/workspace directory",
+    )
+    report.add_argument(
+        "-o",
+        "--out",
+        default=None,
+        help="Output directory for reports (default: <workspace>/reports)",
+    )
+    report.add_argument(
+        "-f",
+        "--format",
+        default="html,md,json",
+        help="Comma-separated formats: %s (default: html,md,json)"
+        % ",".join(VALID_FORMATS),
+    )
+    report.add_argument(
+        "-n", "--name", default=None, help="Engagement name (default: workspace folder name)"
+    )
+    report.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
+    report.set_defaults(func=_cmd_report)
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if not getattr(args, "command", None):
+        _print_banner()
+        parser.print_help(sys.stderr)
+        return 1
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

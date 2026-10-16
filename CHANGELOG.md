@@ -1,4 +1,6 @@
 ## CHANGELOG:
+* Added Jarvis orchestration & reporting layer (jarvis/): zero-dependency HTML/Markdown/JSON report generator (optional PDF) that reads Sn1per loot; auto-runs on Community-edition scans
+* Fixed broken bin/report.py stub (hard-coded path) — now delegates to the Jarvis engine
 * v9.2 - Added Tomba.io API integration via OSINT mode (Credit: @benemohamed)
 * v9.2 - Fixed issue with gau tool not installing and updated GAU setting in confs
 * v9.2 - Updated python2 to python3

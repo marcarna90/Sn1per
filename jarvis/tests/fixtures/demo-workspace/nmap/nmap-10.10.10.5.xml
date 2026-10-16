@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun scanner="nmap" args="nmap -sV -O 10.10.10.5" start="1700000000" version="7.94">
+  <host>
+    <status state="up" reason="echo-reply"/>
+    <address addr="10.10.10.5" addrtype="ipv4"/>
+    <address addr="00:0c:29:ab:cd:ef" addrtype="mac" vendor="VMware"/>
+    <hostnames>
+      <hostname name="web01.demo.lab" type="PTR"/>
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack"/>
+        <service name="ssh" product="OpenSSH" version="8.2p1 Ubuntu"/>
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack"/>
+        <service name="http" product="Apache httpd" version="2.4.41"/>
+      </port>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack"/>
+        <service name="https" product="Apache httpd" version="2.4.41"/>
+      </port>
+      <port protocol="tcp" portid="3306">
+        <state state="open" reason="syn-ack"/>
+        <service name="mysql" product="MySQL" version="5.7.33"/>
+      </port>
+    </ports>
+    <os>
+      <osmatch name="Linux 5.4 (Ubuntu 20.04)" accuracy="96"/>
+    </os>
+  </host>
+</nmaprun>

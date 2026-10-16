@@ -1,0 +1,3 @@
+HIGH, SMTP open relay suspected, 10.10.10.9:25, accepted RCPT to external domain
+MEDIUM, Jetty version disclosure, http://10.10.10.9:8080/, Server: Jetty(9.4.z)
+INFO, IMAP banner discloses software, 10.10.10.9:143, Dovecot ready
