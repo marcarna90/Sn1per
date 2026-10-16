@@ -25,6 +25,62 @@ def _print_banner() -> None:
     sys.stderr.write(BANNER + "\n")
 
 
+def _cmd_export(args: argparse.Namespace) -> int:
+    from jarvis import export as exportmod
+
+    workspace = Path(args.workspace).expanduser()
+    if not workspace.is_dir():
+        sys.stderr.write(f"[!] Workspace not found: {workspace}\n")
+        return 2
+    reports_dir = Path(args.reports_dir).expanduser() if args.reports_dir else workspace / "reports"
+
+    if not args.quiet:
+        _print_banner()
+
+    # --serve just hosts the reports directory for host-side download.
+    if args.serve:
+        files = exportmod.collect_report_files(reports_dir)
+        if not files:
+            sys.stderr.write(
+                f"[!] No report files in {reports_dir}. Run 'jarvis report' / 'jarvis asm' first.\n"
+            )
+            return 2
+        httpd = exportmod.serve(reports_dir, port=args.port, bind=args.bind)
+        ip = exportmod.primary_ip()
+        sys.stderr.write(
+            f"[*] Serving {reports_dir} ({len(files)} file(s)) over HTTP.\n"
+            f"[*] From the HOST browser open:  http://{ip}:{args.port}/\n"
+            f"[*] (also http://localhost:{args.port}/ if a port is forwarded)\n"
+            f"[*] Press Ctrl+C to stop.\n"
+        )
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            sys.stderr.write("\n[*] Stopped.\n")
+        finally:
+            httpd.server_close()
+        return 0
+
+    # Otherwise: build a single portable zip bundle.
+    try:
+        archive = exportmod.bundle(
+            workspace=workspace, out=args.out, reports_dir=reports_dir, name=args.name
+        )
+    except FileNotFoundError as exc:
+        sys.stderr.write(f"[!] {exc}\n")
+        return 2
+    print(f"[+] Bundle: {archive}")
+
+    if args.to:
+        try:
+            copied = exportmod.copy_to(archive, args.to)
+            print(f"[+] Copied to: {copied}")
+        except OSError as exc:
+            sys.stderr.write(f"[!] Copy to {args.to} failed: {exc}\n")
+            return 1
+    return 0
+
+
 def _cmd_run(args: argparse.Namespace) -> int:
     from jarvis.orchestrate.config import CampaignError, load_campaign
     from jarvis.orchestrate.executor import DryRunExecutor, SniperExecutor
@@ -353,6 +409,33 @@ def build_parser() -> argparse.ArgumentParser:
         "--install", action="store_true", help="Append the line to the current user's crontab"
     )
     sched.set_defaults(func=_cmd_schedule)
+
+    export = sub.add_parser(
+        "export",
+        help="Export a workspace's reports off the VM/container (zip bundle or HTTP)",
+    )
+    export.add_argument("-w", "--workspace", required=True, help="Sn1per loot/workspace directory")
+    export.add_argument(
+        "--reports-dir", default=None,
+        help="Directory holding the reports (default: <workspace>/reports)",
+    )
+    export.add_argument(
+        "-o", "--out", default=None,
+        help="Output .zip path or directory for the bundle (default: the workspace dir)",
+    )
+    export.add_argument(
+        "--to", default=None,
+        help="Also copy the bundle to this directory (e.g. a mounted shared folder)",
+    )
+    export.add_argument(
+        "--serve", action="store_true",
+        help="Serve the reports over HTTP for host-side download instead of zipping",
+    )
+    export.add_argument("--port", type=int, default=8000, help="Port for --serve (default: 8000)")
+    export.add_argument("--bind", default="0.0.0.0", help="Bind address for --serve (default: 0.0.0.0)")
+    export.add_argument("-n", "--name", default=None, help="Bundle name (default: workspace folder name)")
+    export.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
+    export.set_defaults(func=_cmd_export)
 
     return parser
 

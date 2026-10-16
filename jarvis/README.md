@@ -194,6 +194,42 @@ to A (Excellent) … F (Critical), both overall and for each exposure category.
 `--live` performs active DNS/TLS/typosquat resolution against in-scope assets —
 only run it against targets you are authorised to assess.
 
+## Exporting reports off a VM / container
+
+When Jarvis runs inside a Kali VM or a container, the reports land in the guest
+filesystem. `jarvis-cli export` gets them to the host with no extra tooling:
+
+```bash
+# Bundle a workspace's reports into one portable .zip (in the workspace dir)
+./jarvis-cli export -w loot/workspace/acme
+
+# Bundle AND drop it into a mounted shared folder (VirtualBox/VMware)
+./jarvis-cli export -w loot/workspace/acme --to /media/sf_shared
+
+# Or serve the reports over HTTP and download them from the host browser
+./jarvis-cli export -w loot/workspace/acme --serve --port 8000
+#   -> open http://<vm-ip>:8000/ on the host
+```
+
+| Flag | Description | Default |
+| --- | --- | --- |
+| `-w, --workspace` | Sn1per loot/workspace directory (required) | — |
+| `--reports-dir` | Directory holding the reports | `<workspace>/reports` |
+| `-o, --out` | Output `.zip` path or directory | the workspace dir |
+| `--to` | Also copy the bundle to this directory (e.g. a shared folder) | — |
+| `--serve` | Serve the reports over HTTP instead of zipping | off |
+| `--port` / `--bind` | HTTP server port / bind address for `--serve` | `8000` / `0.0.0.0` |
+
+The bundle gathers `*.html`, `*.pdf`, `*.md`, `*.json`, `*.csv` from the
+reports directory. Transport recipes for the common setups:
+
+- **VirtualBox/VMware shared folder** — `--to /media/sf_<name>` (the guest's
+  mount of the host folder).
+- **SSH from the host** — `scp user@<vm-ip>:/path/to/<bundle>.zip .`
+- **Docker** — bind-mount the loot at run time (`-v "$PWD/loot:/usr/share/sniper/loot"`)
+  so reports appear on the host directly, or `docker cp <container>:<bundle>.zip .`
+- **Any setup** — `--serve`, then download from the host browser.
+
 ## What it parses
 
 | Loot source | Becomes |
