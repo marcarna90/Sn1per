@@ -95,6 +95,43 @@ jarvis --version
 > If `/usr/local/bin` is not on your `PATH`, the installer prints the line to
 > add.
 
+### Windows install
+
+Pick the path that matches what you need:
+
+**A. WSL2 — full tool (recommended for scanning).** Install a Kali or Ubuntu
+distro from the Microsoft Store, open it, then use the normal Linux install:
+
+```bash
+git clone https://github.com/marcarna90/Sn1per
+cd Sn1per
+sudo bash install.sh        # both 'sniper' and 'jarvis' work inside WSL2
+```
+
+**B. Docker Desktop — full engine in a container.** Same as the Docker section
+below; `docker compose run --rm kali-linux /bin/bash`, and reports land on the
+host under `.\loot\workspace\<ws>\reports\` via the bind mount.
+
+**C. Native Windows — Jarvis reporting only (no scanning engine).** Jarvis is
+pure Python and runs in cmd/PowerShell; the `sniper` engine does not. Install
+[Python 3](https://www.python.org/downloads/) (tick *Add python.exe to PATH*),
+then from a PowerShell prompt:
+
+```powershell
+git clone https://github.com/marcarna90/Sn1per
+cd Sn1per
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+# open a new terminal, then:
+jarvis report -w <WORKSPACE_FOLDER>
+jarvis asm    -w <WORKSPACE_FOLDER> --client "<CLIENT>"
+```
+
+`install.ps1` adds the `jarvis` command to your user `PATH` (no admin needed);
+`jarvis.cmd` is the launcher. PDF export uses Microsoft **Edge** automatically
+(no extra install). Use this to turn loot copied from a WSL2/Docker/Linux scan
+box into client reports on your Windows machine. Run `install.ps1 -InPlace` to
+use the command straight from the cloned folder without copying it elsewhere.
+
 ## AWS AMI (Free Tier) VPS Install
 
 [![](https://sn1persecurity.com/wordpress/wp-content/uploads/2022/06/AWS-Marketplace.png)](https://aws.amazon.com/marketplace/pp/prodview-rmloab6wnymno)

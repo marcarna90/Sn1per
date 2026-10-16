@@ -64,6 +64,7 @@ def _try_chromium(html_path: Path, out_path: Path) -> bool:
         "chrome",
         "chrome-headless-shell",
         "headless_shell",
+        "msedge",  # Microsoft Edge (Chromium) — ubiquitous on Windows
     ]
     binary = ""
     for name in candidates:
