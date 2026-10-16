@@ -1,4 +1,5 @@
 ## CHANGELOG:
+* Added Jarvis ASM (External Attack Surface Management, FortiRecon-style): classified asset inventory (domains/subdomains/IPs/services/technologies/email domains), EASM exposure categorisation (exposed admin/open database/sensitive file/weak TLS/misconfig/...), A-F posture grade (global + per category), and a dedicated 'jarvis-cli asm' report in two layouts — full technical + one-page executive (HTML/MD/JSON/PDF)
 * Recreated install.sh (was deleted upstream): deploys the framework to /usr/share/sniper, installs core OS deps (apt, tolerant of missing packages), registers 'sniper' and 'jarvis' commands, best-effort Go scanners, with a --no-deps flag and a non-root test hatch
 * Added Jarvis orchestration & reporting layer (jarvis/): zero-dependency HTML/Markdown/JSON report generator (optional PDF) that reads Sn1per loot; auto-runs on Community-edition scans
 * Added Jarvis campaign orchestration: declarative JSON/YAML workflows, sequential phases with parallel tasks, dry-run planner, task-state checkpointing, and an automatic end-of-campaign report ('jarvis-cli run')

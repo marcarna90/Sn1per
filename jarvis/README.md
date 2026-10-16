@@ -148,6 +148,35 @@ Scheduled runs use `--resume` automatically.
 | `--resume` | Skip tasks already done in the workspace state | off |
 | `--slack-webhook` | Slack webhook for an end-of-campaign summary | `$SLACK_WEBHOOK` |
 
+## Attack Surface Management (ASM)
+
+Beyond the per-scan report, Jarvis can produce a **FortiRecon-style External
+Attack Surface Management** report from the same loot: a classified **asset
+inventory**, **EASM exposure categories** (exposed admin interface, open
+database, sensitive file, weak/expired TLS, misconfiguration, missing email
+auth, subdomain takeover, ...), and an **A–F posture grade** (global and per
+category). It renders in two layouts — a full **technical** report and a
+one-page **executive** summary for client presentation.
+
+```bash
+# Technical + executive, with a client name, as HTML/MD/JSON/PDF
+./jarvis-cli asm -w loot/workspace/acme -f html,md,json,pdf --client "ACME Corp"
+
+# Technical only (skip the executive one-pager)
+./jarvis-cli asm -w loot/workspace/acme --no-executive
+```
+
+| Flag | Description | Default |
+| --- | --- | --- |
+| `-w, --workspace` | Sn1per loot/workspace directory (required) | — |
+| `-o, --out` | Output directory | `<workspace>/reports` |
+| `-f, --format` | Comma list of `html,md,json,pdf` | `html,md,json` |
+| `--client` | Client name shown on the report | — |
+| `--no-executive` | Skip the one-page executive report | off |
+
+The posture grade is a 100-point score (penalised per finding severity) mapped
+to A (Excellent) … F (Critical), both overall and for each exposure category.
+
 ## What it parses
 
 | Loot source | Becomes |

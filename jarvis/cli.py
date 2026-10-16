@@ -139,6 +139,49 @@ def _cmd_schedule(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_asm(args: argparse.Namespace) -> int:
+    from jarvis.asm.generate import VALID_FORMATS as ASM_FORMATS
+    from jarvis.asm.generate import generate_asm_reports
+
+    workspace = Path(args.workspace).expanduser()
+    if not workspace.is_dir():
+        sys.stderr.write(f"[!] Loot directory not found: {workspace}\n")
+        return 2
+
+    out_dir = args.out or (workspace / "reports")
+    formats = [f.strip() for f in args.format.split(",") if f.strip()]
+
+    if not args.quiet:
+        _print_banner()
+        sys.stderr.write(f"[*] Building attack surface from: {workspace}\n")
+
+    try:
+        results = generate_asm_reports(
+            loot_root=workspace,
+            out_dir=out_dir,
+            formats=formats,
+            name=args.name,
+            client=args.client or "",
+            executive=not args.no_executive,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        sys.stderr.write(f"[!] {exc}\n")
+        return 2
+
+    order = ["html", "html_exec", "md", "json", "pdf", "pdf_exec"]
+    labels = {
+        "html": "HTML (technical)", "html_exec": "HTML (executive)",
+        "md": "Markdown", "json": "JSON", "pdf": "PDF (technical)",
+        "pdf_exec": "PDF (executive)",
+    }
+    for key in order:
+        if key in results:
+            print(f"[+] {labels[key]:18s} -> {results[key]}")
+    if "pdf_error" in results:
+        sys.stderr.write(f"[i] PDF skipped: {results['pdf_error']}\n")
+    return 0
+
+
 def _cmd_report(args: argparse.Namespace) -> int:
     workspace = Path(args.workspace).expanduser()
     if not workspace.is_dir():
@@ -251,6 +294,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
     run.set_defaults(func=_cmd_run)
+
+    asm = sub.add_parser(
+        "asm",
+        help="Generate an External Attack Surface Management report from loot",
+    )
+    asm.add_argument("-w", "--workspace", required=True, help="Sn1per loot/workspace directory")
+    asm.add_argument("-o", "--out", default=None, help="Output directory (default: <workspace>/reports)")
+    asm.add_argument(
+        "-f", "--format", default="html,md,json",
+        help="Comma-separated formats: html,md,json,pdf (default: html,md,json)",
+    )
+    asm.add_argument("-n", "--name", default=None, help="Engagement name (default: workspace folder name)")
+    asm.add_argument("--client", default=None, help="Client name shown on the report")
+    asm.add_argument(
+        "--no-executive", action="store_true",
+        help="Do not also produce the one-page executive report",
+    )
+    asm.add_argument("-q", "--quiet", action="store_true", help="Suppress the banner")
+    asm.set_defaults(func=_cmd_asm)
 
     sched = sub.add_parser(
         "schedule",
