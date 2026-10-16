@@ -73,6 +73,28 @@ engine) and **`jarvis`** (the reporting/orchestration layer). Run
 OS packages. Kali Linux ships most of the third-party scanners the engine
 calls; see [jarvis/README.md](jarvis/README.md) for the Jarvis layer.
 
+### macOS install
+
+`install.sh` is cross-platform. On macOS it deploys to `/usr/local/share/sniper`,
+registers the **`jarvis`** command in `/usr/local/bin` (SIP forbids writing
+`/usr/bin` and `/usr/share`), and installs core dependencies with **Homebrew**
+(run as your user — Homebrew refuses `root`). No `sudo` is required if
+`/usr/local` is writable by your account.
+
+```
+git clone https://github.com/marcarna90/Sn1per
+cd Sn1per
+bash install.sh            # uses Homebrew for deps; add --no-deps to skip
+jarvis --version
+```
+
+> The bash **scanning engine** (`sniper`) is Linux-oriented and is **not**
+> registered on macOS. On macOS, run the full engine via **Docker** (see
+> below), and use the native **`jarvis`** layer (`report` / `asm` / `export`)
+> on loot — ideal for turning a scan into client-ready attack-surface reports.
+> If `/usr/local/bin` is not on your `PATH`, the installer prints the line to
+> add.
+
 ## AWS AMI (Free Tier) VPS Install
 
 [![](https://sn1persecurity.com/wordpress/wp-content/uploads/2022/06/AWS-Marketplace.png)](https://aws.amazon.com/marketplace/pp/prodview-rmloab6wnymno)

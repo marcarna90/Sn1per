@@ -1,11 +1,6 @@
 #!/bin/bash
-# Uninstall script for Sn1per
+# Uninstall script for Sn1per + Jarvis (Linux + macOS)
 # Created by @xer0dayz - https://sn1persecurity.com
-
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
-   exit 1
-fi
 
 # VARS
 OKBLUE='\033[94m'
@@ -24,12 +19,24 @@ echo -e "$RESET"
 echo -e "$OKORANGE + -- --=[https://sn1persecurity.com$RESET"
 echo ""
 
-INSTALL_DIR=/usr/share/sniper
+# Cover both the Linux (/usr/share, /usr/bin) and macOS (/usr/local) layouts.
+INSTALL_DIRS=("/usr/share/sniper" "/usr/local/share/sniper")
+BIN_DIRS=("/usr/bin" "/usr/local/bin" "/opt/homebrew/bin" "$HOME/.local/bin")
 
-echo -e "$OKRED[>]$RESET This script will uninstall sniper and remove ALL files under $INSTALL_DIR. Are you sure you want to continue?$RESET"
-read answer
+echo -e "$OKRED[>]$RESET This will remove sniper/jarvis and ALL files under:$RESET"
+for d in "${INSTALL_DIRS[@]}"; do echo "    $d"; done
+echo -e "$OKRED[>]$RESET Hit Enter to continue, or Ctrl+C to abort.$RESET"
+read -r answer
 
-rm -Rf /usr/share/sniper/
-rm -f /usr/bin/sniper
+for d in "${INSTALL_DIRS[@]}"; do
+  [[ -e "$d" ]] && rm -Rf "$d" && echo -e "$OKBLUE[*]$RESET removed $d"
+done
+for b in "${BIN_DIRS[@]}"; do
+  for cmd in sniper jarvis; do
+    if [[ -L "$b/$cmd" || -e "$b/$cmd" ]]; then
+      rm -f "$b/$cmd" && echo -e "$OKBLUE[*]$RESET removed $b/$cmd"
+    fi
+  done
+done
 
 echo -e "$OKBLUE[*]$RESET Done!$RESET"
