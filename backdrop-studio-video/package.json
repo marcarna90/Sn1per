@@ -4,10 +4,11 @@
   "private": true,
   "description": "Pub verticale 1080x1920 (TikTok/Reels/Shorts) pour BACKDROP STUDIO PRO",
   "scripts": {
-    "voice": "python3 scripts/generate_voice.py",
     "studio": "remotion studio",
-    "still": "remotion still BackdropAd out/still.png",
-    "render": "remotion render BackdropAd out/backdrop-studio-pro-ad.mp4",
+    "voice:femme": "python3 scripts/generate_voiceover.py",
+    "render": "remotion render BackdropStudioAd out/pub_backdrop.mp4",
+    "voice": "python3 scripts/generate_voice.py",
+    "render:synced": "remotion render BackdropAd out/backdrop-studio-pro-ad.mp4",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

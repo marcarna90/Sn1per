@@ -1,15 +1,16 @@
-import React from 'react';
-import {Composition} from 'remotion';
-import {BackdropAd} from './BackdropAd';
-import {FPS, HEIGHT, TOTAL_FRAMES, WIDTH} from './timeline';
+import React from "react";
+import { Composition } from "remotion";
+import { MainVideo } from "./MainVideo";
 
-export const RemotionRoot: React.FC = () => (
-  <Composition
-    id="BackdropAd"
-    component={BackdropAd}
-    width={WIDTH}
-    height={HEIGHT}
-    fps={FPS}
-    durationInFrames={TOTAL_FRAMES}
-  />
-);
+export const Root: React.FC = () => {
+  return (
+    <Composition
+      id="BackdropStudioAd"
+      component={MainVideo}
+      durationInFrames={1200}
+      fps={30}
+      width={1080}
+      height={1920}
+    />
+  );
+};

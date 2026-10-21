@@ -10,7 +10,7 @@ export const LEAD_FRAMES = 6;
 export const SCENE_OVERLAP = 8;
 
 export type SceneId = 'problem' | 'reveal' | 'proof' | 'cta';
-export type SegmentId = 'hook' | 'intro' | 'block1' | 'block2' | 'block3' | 'proof' | 'cta';
+export type SegmentId = 'stop' | 'pain' | 'intro' | 'block1' | 'block2' | 'block3' | 'proof' | 'cta';
 
 export type TimedSegment = {
   id: SegmentId;
@@ -20,16 +20,18 @@ export type TimedSegment = {
   start: number;
   /** Images occupées par la voix. */
   speechFrames: number;
-  /** Images réservées au segment (voix + respiration). */
+  /** Images réservées au segment (voix + respiration + temps de lecture ajouté). */
   frames: number;
-  /** Chemin dans public/ si l'audio a été généré, sinon null. */
-  audioFile: string | null;
-  /** true si la durée vient du mp3 réel, false si c'est la durée prévue. */
+  /** true si la durée vient de l'audio réel, false si c'est la durée prévue. */
   measured: boolean;
 };
 
-type ManifestEntry = {file: string; durationSec: number};
-const manifest = (generated as {segments: Record<string, ManifestEntry>}).segments;
+type ManifestEntry = {durationSec: number};
+type Manifest = {track?: {file: string; durationSec: number} | null; segments: Record<string, ManifestEntry>};
+const manifest = generated as Manifest;
+
+/** Piste voix off unique (public/<fichier>), construite par scripts/generate_voice.py ; null tant qu'elle n'existe pas. */
+export const AUDIO_TRACK: string | null = manifest.track?.file ?? null;
 
 const gapFrames = Math.round(narration.gapSec * FPS);
 const tailFrames = Math.round(narration.tailSec * FPS);
@@ -37,10 +39,11 @@ const tailFrames = Math.round(narration.tailSec * FPS);
 let cursor = LEAD_FRAMES;
 
 export const SEGMENTS: TimedSegment[] = narration.segments.map((s, i, all) => {
-  const entry = manifest[s.id];
+  const entry = manifest.segments[s.id];
   const speechSec = entry ? entry.durationSec : s.fallbackSec;
   const speechFrames = Math.ceil(speechSec * FPS);
-  const frames = speechFrames + (i === all.length - 1 ? tailFrames : gapFrames);
+  const holdFrames = Math.round(((s as {holdSec?: number}).holdSec ?? 0) * FPS);
+  const frames = speechFrames + (i === all.length - 1 ? tailFrames : gapFrames) + holdFrames;
   const seg: TimedSegment = {
     id: s.id as SegmentId,
     scene: s.scene as SceneId,
@@ -48,7 +51,6 @@ export const SEGMENTS: TimedSegment[] = narration.segments.map((s, i, all) => {
     start: cursor,
     speechFrames,
     frames,
-    audioFile: entry ? entry.file : null,
     measured: Boolean(entry),
   };
   cursor += frames;
@@ -91,7 +93,8 @@ export const scene = (id: SceneId): SceneRange => {
 
 /** Couleur d'accent des sous-titres selon le segment. */
 export const SEGMENT_ACCENT: Record<SegmentId, string> = {
-  hook: '#ff3b5c',
+  stop: '#ff3b5c',
+  pain: '#ff3b5c',
   intro: '#22e5ff',
   block1: '#22e5ff',
   block2: '#ff2fb3',

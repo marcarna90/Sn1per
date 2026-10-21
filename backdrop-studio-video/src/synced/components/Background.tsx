@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, interpolateColors, random, useCurrentFrame} from 'remotion';
-import {C} from '../theme';
+import {C} from '../../theme';
 import {SCENES} from '../timeline';
 
 /** Deux couleurs néon par scène ; elles se fondent d'une scène à l'autre. */

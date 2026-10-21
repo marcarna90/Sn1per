@@ -2,13 +2,13 @@ import React from 'react';
 import {AbsoluteFill, Html5Audio, interpolate, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {Background} from './components/Background';
 import {Captions} from './components/Captions';
-import {loadFonts} from './fonts';
+import {loadFonts} from '../fonts';
 import {CtaScene} from './scenes/CtaScene';
 import {ProblemScene} from './scenes/ProblemScene';
 import {ProofScene} from './scenes/ProofScene';
 import {RevealScene} from './scenes/RevealScene';
-import {FONT_BODY} from './theme';
-import {SCENE_OVERLAP, SCENES, SEGMENTS, SceneId} from './timeline';
+import {FONT_BODY} from '../theme';
+import {AUDIO_TRACK, SCENE_OVERLAP, SCENES, SceneId} from './timeline';
 
 loadFonts();
 
@@ -49,11 +49,7 @@ export const BackdropAd: React.FC = () => (
 
     <Captions />
 
-    {/* voix off : un mp3 par segment, posé exactement au début de sa phrase */}
-    {SEGMENTS.filter((s) => s.audioFile).map((s) => (
-      <Sequence key={s.id} from={s.start} durationInFrames={s.frames} name={`voix-${s.id}`}>
-        <Html5Audio src={staticFile(s.audioFile as string)} />
-      </Sequence>
-    ))}
+    {/* voix off : une seule piste, déjà calée image par image sur la timeline (scripts/generate_voice.py) */}
+    {AUDIO_TRACK && <Html5Audio src={staticFile(AUDIO_TRACK)} volume={1} />}
   </AbsoluteFill>
 );

@@ -1,154 +1,115 @@
-import React from 'react';
-import {interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {ShotVariant, StudioShot} from '../components/StudioShot';
-import {C, FONT_BODY, FONT_DISPLAY} from '../theme';
-import {scene, segment} from '../timeline';
-
-const SHOTS: ShotVariant[] = ['noir', 'velours', 'neon'];
-const CHIPS = [
-  {text: 'POSES', color: C.cyan},
-  {text: 'CADRAGES', color: C.magenta},
-  {text: 'DÉCORS', color: C.gold},
-  {text: 'LUMIÈRES', color: C.cyan},
-];
-
-const CARD = {w: 620, h: 780, top: 285};
+import React from "react";
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { KineticCaption } from "../components/KineticCaption";
+import { PhotoCarousel } from "../components/PhotoCarousel";
 
 export const ProofScene: React.FC = () => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const sc = scene('proof');
-  const seg = segment('proof');
-  const len = seg.frames;
+  const { fps } = useVideoConfig();
 
-  const head = spring({frame, fps, config: {damping: 13, stiffness: 150}});
-
-  // « Position » flottante du carrousel : saute d'un cran au tiers et aux deux tiers de la phrase.
-  const step = (at: number) => spring({frame: frame - at, fps, config: {damping: 16, stiffness: 90, mass: 1}});
-  const active = step(Math.round(len * 0.36)) + step(Math.round(len * 0.68));
-
-  const chipsStart = Math.round(len * 0.42);
-  const hot = Math.floor(Math.max(0, frame - chipsStart) / 34) % CHIPS.length;
-  const label = spring({frame: frame - chipsStart + 6, fps, config: {damping: 14}});
+  const metrics = [
+    { value: "130", label: "Décors composites" },
+    { value: "10", label: "Poses studio" },
+    { value: "8", label: "Cadrages optiques" },
+  ];
 
   return (
-    <div style={{position: 'absolute', inset: 0}}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        background: "radial-gradient(circle at 50% 30%, #151928 0%, #08090C 80%)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "160px 40px",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* Badge Compatibilité */}
       <div
         style={{
-          position: 'absolute',
-          top: 112,
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          opacity: head,
-          transform: `translateY(${(1 - head) * -50}px)`,
-        }}
-      >
-        <div style={{fontFamily: FONT_BODY, fontWeight: 800, fontSize: 28, letterSpacing: 9, color: C.gold, marginBottom: 2}}>LE RÉSULTAT</div>
-        <div
-          style={{
-            fontFamily: FONT_DISPLAY,
-            fontSize: 138,
-            lineHeight: 0.95,
-            backgroundImage: `linear-gradient(90deg, ${C.gold}, #fff2c9 45%, ${C.magenta})`,
-            WebkitBackgroundClip: 'text',
-            color: 'transparent',
-          }}
-        >
-          RENDU STUDIO LUXE
-        </div>
-      </div>
-
-      {/* carrousel de maquettes */}
-      <div style={{position: 'absolute', left: 0, right: 0, top: CARD.top, height: CARD.h, perspective: 1500}}>
-        {SHOTS.map((variant, i) => {
-          const pos = i - active;
-          const abs = Math.abs(pos);
-          const enter = spring({frame: frame - 4 - i * 5, fps, config: {damping: 14, stiffness: 120}});
-          const x = pos * 470;
-          const scale = (1 - Math.min(abs, 1.6) * 0.2) * (0.7 + 0.3 * enter);
-          return (
-            <div
-              key={variant}
-              style={{
-                position: 'absolute',
-                left: (1080 - CARD.w) / 2,
-                top: 0,
-                width: CARD.w,
-                height: CARD.h,
-                opacity: Math.max(0, 1 - abs * 0.42) * enter,
-                zIndex: 10 - Math.round(abs * 3),
-                transform: `translateX(${x}px) translateY(${(1 - enter) * 120}px) rotateY(${-pos * 24}deg) scale(${scale})`,
-                filter: `brightness(${1 - Math.min(abs, 1) * 0.35})`,
-                boxShadow: abs < 0.5 ? `0 40px 90px rgba(0,0,0,0.6), 0 0 80px ${C.gold}33` : 'none',
-                borderRadius: 40,
-              }}
-            >
-              <StudioShot variant={variant} style={{width: '100%', height: '100%'}} />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* bibliothèque modulaire */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 1098,
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          fontFamily: FONT_BODY,
-          fontWeight: 800,
-          fontSize: 25,
-          letterSpacing: 7,
-          color: C.mute,
-          opacity: label,
-        }}
-      >
-        BIBLIOTHÈQUE MODULAIRE
-      </div>
-      <div style={{position: 'absolute', top: 1146, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 16}}>
-        {CHIPS.map((c, i) => {
-          const p = spring({frame: frame - chipsStart - i * 5, fps, config: {damping: 10, stiffness: 200, mass: 0.6}});
-          const on = i === hot && frame > chipsStart + 22;
-          return (
-            <div
-              key={c.text}
-              style={{
-                padding: '8px 28px 4px',
-                borderRadius: 18,
-                fontFamily: FONT_DISPLAY,
-                fontSize: 50,
-                letterSpacing: 1.5,
-                color: on ? '#0b0620' : C.white,
-                background: on ? c.color : 'rgba(255,255,255,0.07)',
-                border: `3px solid ${c.color}`,
-                boxShadow: on ? `0 0 34px ${c.color}` : `0 0 12px ${c.color}44`,
-                transform: `scale(${p * (on ? 1.08 : 1)}) translateY(${(1 - p) * 40}px)`,
-                opacity: p,
-              }}
-            >
-              {c.text}
-            </div>
-          );
-        })}
-      </div>
-      <div
-        style={{
-          position: 'absolute',
-          top: 1246,
-          left: 60,
-          right: 60,
-          textAlign: 'center',
-          fontFamily: FONT_BODY,
-          fontWeight: 500,
+          display: "flex",
+          gap: 16,
+          backgroundColor: "rgba(255,255,255,0.08)",
+          borderRadius: 30,
+          padding: "12px 28px",
+          color: "#E2E8F0",
           fontSize: 24,
-          color: 'rgba(255,255,255,0.5)',
-          opacity: label,
+          fontWeight: 700,
         }}
       >
-        Visuels illustratifs · les résultats varient selon l&apos;outil IA et la photo de référence
+        <span>⚡ Optimisé pour ChatGPT Images & Gemini</span>
+      </div>
+
+      {/* Vraies photos de rendu */}
+      <PhotoCarousel width={560} height={700} firstStep={50} every={75} />
+
+      {/* Compteurs / Métriques */}
+      <div style={{ display: "flex", gap: 24, width: "100%", justifyContent: "center" }}>
+        {metrics.map((m, i) => {
+          const s = spring({ frame: frame - (10 + i * 12), fps });
+          return (
+            <div
+              key={i}
+              style={{
+                transform: `scale(${s})`,
+                backgroundColor: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 24,
+                padding: "36px 30px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
+                flex: 1,
+              }}
+            >
+              <span style={{ fontSize: 64, fontWeight: 900, color: "#00F0FF" }}>
+                {m.value}
+              </span>
+              <span style={{ color: "#CBD5E1", fontSize: 22, textAlign: "center", fontWeight: 600 }}>
+                {m.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Feature Box Retouche 2 Passes */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 880,
+          backgroundColor: "rgba(0, 240, 255, 0.08)",
+          border: "2px dashed #00F0FF",
+          borderRadius: 20,
+          padding: "24px 32px",
+          textAlign: "center",
+          color: "#FFF",
+          fontSize: 28,
+          fontWeight: 700,
+        }}
+      >
+        Workflow Pro en 2 passes : corrigez 1 détail sans toucher au visage
+      </div>
+
+      {/* Kinetic Subtitles */}
+      <div style={{ minHeight: 180, display: "flex", alignItems: "center" }}>
+        {frame < 180 ? (
+          <KineticCaption
+            text="Une infinité de variations avec la bibliothèque modulaire"
+            highlightWords={["INFINITÉ", "MODULAIRE"]}
+            highlightColor="#00F0FF"
+          />
+        ) : (
+          <KineticCaption
+            text="Fini les retouches compliquées, résultat instantané !"
+            highlightWords={["INSTANTANÉ", "FINI"]}
+            highlightColor="#38EF7D"
+          />
+        )}
       </div>
     </div>
   );

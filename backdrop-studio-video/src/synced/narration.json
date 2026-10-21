@@ -1,0 +1,68 @@
+{
+  "voice": "fr-FR-VivienneMultilingualNeural",
+  "rate": "+10%",
+  "pitch": "+0Hz",
+  "gapSec": 0.3,
+  "tailSec": 3,
+  "targetTotalSec": [35, 45],
+  "trackFile": "voiceover_synced.mp3",
+  "segments": [
+    {
+      "id": "stop",
+      "scene": "problem",
+      "fallbackSec": 4.1,
+      "tts": "Arrêtez de ruiner vos portraits avec l'intelligence artificielle !",
+      "caption": "Arrêtez de *ruiner*|vos *portraits* avec|l'intelligence artificielle !"
+    },
+    {
+      "id": "pain",
+      "scene": "problem",
+      "fallbackSec": 3.7,
+      "tts": "Vous en avez marre des visages en plastique méconnaissables ?",
+      "caption": "Vous en avez marre|des visages en *plastique*|*méconnaissables* ?"
+    },
+    {
+      "id": "intro",
+      "scene": "reveal",
+      "fallbackSec": 3.8,
+      "tts": "Voici Backdrop Studio Pro : le tout premier système en 3 blocs.",
+      "caption": "Voici *Backdrop Studio Pro*|le tout premier *système*|en *3 blocs*"
+    },
+    {
+      "id": "block1",
+      "scene": "reveal",
+      "fallbackSec": 4.5,
+      "tts": "Bloc 1 : Identity Lock, qui verrouille vos vrais traits et votre carnation.",
+      "caption": "Bloc 1 : *Identity Lock*|verrouille vos *vrais traits*|et votre *carnation*"
+    },
+    {
+      "id": "block2",
+      "scene": "reveal",
+      "fallbackSec": 3.5,
+      "tts": "Bloc 2 : 130 décors réécrits par des photographes de studio.",
+      "caption": "Bloc 2 : *130* décors|réécrits par des|photographes de *studio*"
+    },
+    {
+      "id": "block3",
+      "scene": "reveal",
+      "fallbackSec": 4.1,
+      "tts": "Bloc 3 : Un rendu physique professionnel avec éclairage studio réel.",
+      "caption": "Bloc 3 : un rendu *physique*|professionnel avec|éclairage *studio réel*"
+    },
+    {
+      "id": "proof",
+      "scene": "proof",
+      "fallbackSec": 4.4,
+      "holdSec": 3.5,
+      "tts": "Fini les visages déformés. Obtenez vos portraits de luxe dès aujourd'hui.",
+      "caption": "Fini les visages *déformés*.|Obtenez vos portraits|de *luxe* dès aujourd'hui."
+    },
+    {
+      "id": "cta",
+      "scene": "cta",
+      "fallbackSec": 3.9,
+      "tts": "Téléchargez le pack sur notre boutique : rontsr.mychariow.shop !",
+      "caption": "Téléchargez le *pack*|sur notre *boutique* :|~*rontsr.mychariow.shop*"
+    }
+  ]
+}

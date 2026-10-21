@@ -1,14 +1,17 @@
 import React from 'react';
 import {interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {C, FONT_BODY} from '../theme';
+import {C, FONT_BODY} from '../../theme';
 import {SEGMENTS, SEGMENT_ACCENT, TimedSegment} from '../timeline';
 
 type Word = {text: string; hot: boolean};
-type Phrase = {words: Word[]; chars: number; pause: number};
+type Phrase = {words: Word[]; chars: number; pause: number; small: boolean};
 
 /** "Tes portraits|déforment ton *visage* ?" → phrases → mots (les *mots* sont mis en valeur). */
 const parseCaption = (caption: string): Phrase[] =>
-  caption.split('|').map((raw) => {
+  caption.split('|').map((rawPhrase) => {
+    // « ~ » en tête : phrase en petits caractères et casse d'origine (utile pour une URL).
+    const small = rawPhrase.startsWith('~');
+    const raw = small ? rawPhrase.slice(1) : rawPhrase;
     const words: Word[] = [];
     raw.split('*').forEach((part, i) => {
       part
@@ -19,7 +22,7 @@ const parseCaption = (caption: string): Phrase[] =>
     const plain = words.map((w) => w.text).join(' ');
     // Les ponctuations fortes sont suivies d'une pause à l'oral : on leur donne un peu plus de temps.
     const pause = /[.?!:,…]$/.test(plain) ? 7 : 2;
-    return {words, chars: plain.length, pause};
+    return {words, chars: plain.length, pause, small};
   });
 
 /** Répartit la durée parlée du segment entre les phrases, au prorata des caractères + pauses. */
@@ -72,13 +75,13 @@ export const Captions: React.FC<Props> = ({y = 1310, fontSize = 76}) => {
         flexWrap: 'wrap',
         justifyContent: 'center',
         alignContent: 'flex-start',
-        gap: `0 ${Math.round(fontSize * 0.22)}px`,
+        gap: `0 ${Math.round((current.phrase.small ? fontSize * 0.72 : fontSize) * 0.22)}px`,
         fontFamily: FONT_BODY,
         fontWeight: 900,
-        fontSize,
+        fontSize: current.phrase.small ? Math.round(fontSize * 0.72) : fontSize,
         lineHeight: 1.08,
         letterSpacing: -1.5,
-        textTransform: 'uppercase',
+        textTransform: current.phrase.small ? 'none' : 'uppercase',
         textAlign: 'center',
         opacity: exit,
         transform: `translateY(${(1 - exit) * -14}px)`,

@@ -1,7 +1,9 @@
 import React from 'react';
-import {interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {LightIcon, LockIcon, SceneIcon} from '../components/Icons';
-import {C, FONT_BODY, FONT_DISPLAY} from '../theme';
+import {Img, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
+import {FaceCrop} from '../../components/FaceCrop';
+import {LightIcon, LockIcon, SceneIcon} from '../../components/Icons';
+import {PhotoKey, PHOTOS} from '../../images';
+import {C, FONT_BODY, FONT_DISPLAY} from '../../theme';
 import {scene, segment, SegmentId} from '../timeline';
 
 const CARD_W = 960;
@@ -17,7 +19,7 @@ type Block = {
   color: string;
   Icon: React.FC<{size?: number; color?: string}>;
   counter: {to: number; suffix: string; label: string};
-  extra: 'tag' | 'none' | 'lights';
+  extra: 'tag' | 'thumbs' | 'lights';
 };
 
 const BLOCKS: Block[] = [
@@ -25,7 +27,7 @@ const BLOCKS: Block[] = [
     seg: 'block1',
     n: '01',
     title: 'IDENTITY LOCK™ PRO',
-    sub: 'Tes traits et ta carnation verrouillés',
+    sub: 'Verrouille traits, nez, yeux et carnation exacte',
     color: C.cyan,
     Icon: LockIcon,
     counter: {to: 100, suffix: '%', label: 'VERROUILLÉ'},
@@ -35,23 +37,26 @@ const BLOCKS: Block[] = [
     seg: 'block2',
     n: '02',
     title: 'SCÈNE',
-    sub: 'Décors pros réécrits en optique de studio',
+    sub: 'Réécrits par des photographes professionnels',
     color: C.magenta,
     Icon: SceneIcon,
     counter: {to: 130, suffix: '', label: 'DÉCORS'},
-    extra: 'none',
+    extra: 'thumbs',
   },
   {
     seg: 'block3',
     n: '03',
-    title: 'PHOTO',
-    sub: 'Lumières Pro + indices de réalisme physique',
+    title: 'PHOTO PHYSIQUE',
+    sub: 'Lumières Pro 85mm + 10 indices de réalisme',
     color: C.gold,
     Icon: LightIcon,
     counter: {to: 10, suffix: '', label: 'INDICES'},
     extra: 'lights',
   },
 ];
+
+const FACES: PhotoKey[] = ['rose', 'gold', 'grey'];
+const THUMBS: PhotoKey[] = ['rose', 'gold', 'grey', 'park'];
 
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
@@ -220,21 +225,52 @@ export const RevealScene: React.FC = () => {
               <div style={{fontFamily: FONT_BODY, fontWeight: 600, fontSize: 27, lineHeight: 1.25, color: C.mute, marginTop: 10}}>{b.sub}</div>
 
               {b.extra === 'tag' && (
-                <div
-                  style={{
-                    display: 'inline-block',
-                    marginTop: 14,
-                    padding: '7px 18px',
-                    borderRadius: 999,
-                    border: `2px solid ${b.color}`,
-                    fontFamily: FONT_BODY,
-                    fontWeight: 800,
-                    fontSize: 22,
-                    letterSpacing: 3,
-                    color: b.color,
-                  }}
-                >
-                  SANS DÉFORMATION
+                <div style={{display: 'flex', alignItems: 'center', gap: 16, marginTop: 12}}>
+                  <div
+                    style={{
+                      padding: '7px 18px',
+                      borderRadius: 999,
+                      border: `2px solid ${b.color}`,
+                      fontFamily: FONT_BODY,
+                      fontWeight: 800,
+                      fontSize: 22,
+                      letterSpacing: 3,
+                      color: b.color,
+                    }}
+                  >
+                    SANS DÉFORMATION
+                  </div>
+                  {/* même visage, trois décors */}
+                  <div style={{display: 'flex'}}>
+                    {FACES.map((k, n) => {
+                      const pop = spring({frame: frame - (start + 10 + n * 7), fps, config: {damping: 10, stiffness: 220, mass: 0.6}});
+                      return <FaceCrop key={k} photo={k} size={58} ringColor={b.color} style={{marginLeft: n ? -14 : 0, transform: `scale(${pop})`, zIndex: 3 - n}} />;
+                    })}
+                  </div>
+                </div>
+              )}
+              {b.extra === 'thumbs' && (
+                <div style={{display: 'flex', gap: 10, marginTop: 14}}>
+                  {THUMBS.map((k, n) => {
+                    const pop = spring({frame: frame - (start + 12 + n * 7), fps, config: {damping: 10, stiffness: 220, mass: 0.6}});
+                    return (
+                      <div
+                        key={k}
+                        style={{
+                          position: 'relative',
+                          width: 74,
+                          height: 74,
+                          borderRadius: 16,
+                          overflow: 'hidden',
+                          border: `3px solid ${b.color}`,
+                          boxShadow: `0 0 16px ${b.color}88`,
+                          transform: `scale(${pop})`,
+                        }}
+                      >
+                        <Img src={PHOTOS[k].src} style={{position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%'}} />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
               {b.extra === 'lights' && (
