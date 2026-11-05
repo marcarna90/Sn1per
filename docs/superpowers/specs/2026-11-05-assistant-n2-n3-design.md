@@ -1,6 +1,6 @@
 # Assistant N2/N3 — design
 
-Date : 2026-11-05 · Branche : `claude/new-session-8c4szi` · Statut : design validé, spec à relire
+Date : 2026-11-05 · Branche : `claude/new-session-8c4szi` · Statut : **implémenté** (voir `assistant-n2-n3/assistant-n2-n3.html`). Les écarts avec la première version de cette spec sont signalés « Mis à jour ».
 
 ## 1. Objectif
 
@@ -8,7 +8,7 @@ Faire évoluer l'outil existant (fichier HTML unique « DELFOS – SOC Investiga
 
 - renommer l'outil en « Assistant N2/N3 » ;
 - ajouter un parcours N3 à côté du N2 QRadar déjà présent ;
-- le livrer comme **Artifact privé** (IA et dossiers partagés actifs) **et** comme copie du HTML dans ce dépôt.
+- le livrer comme **fichier HTML autonome et téléchargeable** (Mis à jour : demande ultérieure de l'utilisateur, à la place d'un Artifact publié), avec une copie dans ce dépôt.
 
 Utilisateur visé : analyste SOC N2/N3 travaillant sur IBM QRadar (et d'autres SIEM), dans un SOC multi-clients.
 
@@ -28,7 +28,7 @@ Utilisateur visé : analyste SOC N2/N3 travaillant sur IBM QRadar (et d'autres S
 | Modules N3 | Hunting par hypothèses · Triage DFIR · Playbooks de réponse + retex · Detection engineering |
 | Structure | Un onglet **« Parcours N3 »** avec 4 sous-onglets, relié au dossier actif |
 | Nom | « Assistant N2/N3 » |
-| Livraison | Artifact privé + copie du HTML dans le dépôt, sur la branche désignée, **sans pull request** |
+| Livraison | Mis à jour : **fichier HTML téléchargeable** + copie dans le dépôt, sur la branche désignée, **sans pull request**. Pas d'Artifact publié (l'utilisateur a demandé le fichier). |
 
 ## 4. Architecture
 
@@ -60,14 +60,16 @@ Utilisateur visé : analyste SOC N2/N3 travaillant sur IBM QRadar (et d'autres S
 - messages d'interface (« ouvrez DELFOS dans Claude… », « équipe SOC qui a accès à DELFOS », « Comme le réglage DELFOS ») ;
 - prompt système (« Tu es l'assistant d'un analyste SOC L2/L3 » → N2/N3, « détections DELFOS » → « détections de l'outil »).
 
-**Inchangés :** les clés `localStorage` `delfos-siem` et `delfos-client` (pour conserver les réglages existants) et, au plus, les commentaires de code internes.
+**Inchangés :** les clés `localStorage` `delfos-siem` et `delfos-client` (pour conserver les réglages existants) et les commentaires de code internes.
+
+**Mis à jour : valeurs de données L2/L3.** Les statuts de dossier (`En cours L2`, `Escaladé L3`), le niveau (`L2`/`L3`), le mode des analyses et les décisions renvoyées par l'IA (`Rester en L2`, `Escalader en L3`) sont des valeurs **enregistrées** dans les dossiers existants et utilisées pour filtrer : les renommer casserait ces dossiers. Elles sont donc conservées telles quelles en base, et **affichées** en N2/N3 par une fonction d'affichage `NN()` (sélecteurs de statut et de niveau, étiquettes de statut, indicateurs, analyses, rapports lisibles). Le schéma JSON demandé à l'IA n'est pas modifié.
 
 ## 6. Modules
 
 ### 6.1 Hunting par hypothèses
 
 - Entrée : choix d'une tactique puis d'une technique, issues des règles de `R`/`NR` (champ `m`).
-- Sortie par technique : modèle d'hypothèse (« Si <technique> a eu lieu, on doit observer … »), sources de données nécessaires, requêtes déjà portées par la règle (Elastic/Splunk/KQL) et un **modèle AQL** quand les champs QRadar standard le permettent ; sinon la carte indique « pas de modèle AQL : propriété personnalisée requise ». Tout AQL est marqué « à valider dans votre environnement ».
+- Sortie par technique : hypothèse, explication, sources de données nécessaires, pistes d'investigation, faux positifs connus, recommandations N2/N3 de la règle, et les requêtes déjà portées par la règle. Mis à jour : chacune des 31 règles porte déjà une requête **AQL** (`q`) et une requête Elastic (`e`) ; Splunk (`sp`) et Sentinel (`kq`) sont affichées quand elles existent. Les tactiques sans règle (Discovery, Collection, Exfiltration, Impact) reçoivent une hypothèse générique et un **squelette AQL** à adapter. Tout AQL est marqué « à valider dans votre environnement ».
 - Résultat noté par l'analyste : `Trouvé` · `Non trouvé` · `Non concluant` · `Données manquantes`, avec commentaire. Export vers une note de dossier ou copie.
 
 ### 6.2 Triage DFIR
@@ -112,14 +114,17 @@ Chromium (Playwright), avec et sans simulation de `claude.use` :
 
 ## 9. Livraison
 
-1. Copie de base du fichier source dans `assistant-n2-n3/assistant-n2-n3.html`, puis modifications.
-2. Publication de l'Artifact privé (capacités déclarées selon le skill `artifact-capabilities`), avec lien rendu à l'utilisateur.
+Mis à jour :
+
+1. Le fichier source n'est pas modifié ; la version N2/N3 est générée dans `assistant-n2-n3/assistant-n2-n3.html`.
+2. Le fichier est remis à l'utilisateur comme pièce jointe téléchargeable. **Aucun Artifact n'est publié.**
 3. Commit(s) sur `claude/new-session-8c4szi` et push ; **pas de pull request**.
+4. Ouvert hors de Claude (fichier local), l'application fonctionne en **mode référence** : les modules N3, l'investigation, le hunting, les rapports et le générateur AQL marchent ; l'assistant IA et les dossiers partagés ne sont actifs que lorsque la page est ouverte dans Claude (comportement d'origine, conservé).
 
 ## 10. Risques et points à vérifier à l'implémentation
 
-- Le fichier appelle `claude.use("sample"|"db"|"user")`. Si le runtime Artifact actuel expose une autre API (`window.claude.*`), adapter le pont d'initialisation sans changer le comportement visible.
-- Vérifier que le rendu des notes de dossier (`fillCase`) gère un `type` inconnu (`n3-*`) ; sinon l'ajouter au rendu.
+- Le fichier appelle `claude.use("sample"|"db"|"user")`. Mis à jour : ce pont d'origine est conservé sans changement. Il n'a été testé qu'avec une **simulation** de cette API, pas dans le runtime réel de Claude : le premier usage réel de l'IA et des dossiers partagés reste à confirmer.
+- Mis à jour : le journal d'un dossier affiche un `type` inconnu comme texte brut ; une étiquette « Parcours N3 » est ajoutée pour les notes `n3-*`.
 - Le menu passe à 12 boutons : vérifier l'affichage mobile (barre horizontale défilable).
 - Les modèles AQL dépendent de la version et de la configuration QRadar : toujours présentés comme « à valider ».
 
