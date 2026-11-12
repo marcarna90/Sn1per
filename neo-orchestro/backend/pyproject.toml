@@ -66,9 +66,13 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "S311", "PLR0915"]
+"tests/**" = ["S101", "S104", "S105", "S106", "S311", "PLR0915"]
 "src/neo_orchestro/cli.py" = ["T20"]
 "migrations/**" = ["N999"]
+
+[tool.ruff.lint.pylint]
+# Guard-clause cascades are the clearest form for default-deny policy code.
+max-returns = 10
 
 [tool.ruff.lint.isort]
 known-first-party = ["neo_orchestro"]

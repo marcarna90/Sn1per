@@ -13,3 +13,7 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
   scans, normalised findings, audit log) with database-level constraints; Alembic
   migration `0001`; append-only audit trail enforced by triggers; integration tests on
   real PostgreSQL (ADR 0003, 0006, 0008).
+- Scope engine (`neo_orchestro.scope`): default-deny evaluation, strict target parsing,
+  hard-denied address classes (loopback, link-local, metadata, multicast, reserved) incl. mapped/6to4/NAT64
+  forms, DNS answer validation with pinning, redirect guard, validated rule creation, dnspython resolver
+  adapter. 192 unit/security tests; mutation-checked (ADR 0004).
