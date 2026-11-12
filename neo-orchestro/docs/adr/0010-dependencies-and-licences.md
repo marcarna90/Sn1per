@@ -17,7 +17,9 @@ Security tooling is a supply-chain target. Builds must be reproducible.
 2. **Licence gate.** Every dependency (transitive included) is checked at lock
    time; the full tree is recorded in `docs/licences.md`. Allowed: MIT, BSD,
    ISC, Apache-2.0, PSF, Unlicense/CC0, MIT-0. **Not imported:** GPL, AGPL,
-   SSPL, Commons-Clause. LGPL only with an explicit ADR (none today).
+   SSPL, Commons-Clause. LGPL only with an explicit ADR (none today). MPL-2.0 and CC-BY data
+   are accepted **only** for unmodified build/test-time tools that are not shipped
+   (ADR 0009: `axe-core`, `lightningcss`, `caniuse-lite`).
 3. **GPL/AGPL *tools* are executed, never imported.** Nmap, for instance, is
    invoked as a separate process with an argv list (ADR 0007) and its XML
    output is parsed with a safe parser; we do **not** use `python-nmap`

@@ -13,5 +13,5 @@ Template: Context / Decision / Alternatives rejected / Consequences.
 | [0006](0006-tenant-isolation-and-audit.md) | Org-scoped repositories, append-only audit log | Accepted |
 | [0007](0007-orchestration.md) | Celery/Redis orchestration, engine allowlist, safe subprocess | Accepted |
 | [0008](0008-normalised-findings.md) | Common normalised findings schema | Accepted |
-| [0009](0009-frontend.md) | Frontend stack and token handling | Planned |
+| [0009](0009-frontend.md) | Frontend stack and token handling | Accepted |
 | [0010](0010-dependencies-and-licences.md) | Dependency management and licence policy | Accepted |

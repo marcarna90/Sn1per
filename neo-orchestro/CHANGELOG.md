@@ -36,4 +36,11 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
   engine `dns_recon` (DNS records + missing-SPF check).
 - API: `/engines`, `/scans` (202 + Location), `/scans/{id}`, `/scans/{id}/findings`, `/scans/{id}/cancel`.
 - 520 tests; 14/14 orchestration mutations and 6/6 subprocess-runner mutations detected.
+- Frontend (ADR 0009): React 19 + TypeScript (strict) + Vite + Tailwind + TanStack Query. Dashboard,
+  scans (create / follow / cancel / findings), scope (add / delete-with-confirmation / dry-run),
+  users, audit log (filter + pagination) and settings (change password). Access token in memory
+  only, HttpOnly refresh cookie, CSRF header, single-flight refresh, role-gated routes, explicit
+  loading/error/empty/permission states, WCAG-oriented markup, French UI.
+- 74 frontend tests (client, auth, every screen, axe); 14/14 UI-safeguard mutations detected;
+  `npm audit`: 0 vulnerabilities.
 

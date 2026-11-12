@@ -22,8 +22,8 @@ Neo-Orchestro itself has no licence chosen yet (all rights reserved).
 | structlog | 26.1.0 | MIT OR Apache-2.0 | Structured logs (observability requirement) |
 | prometheus-client | 0.26.0 | Apache-2.0 AND BSD-2 | Metrics endpoint (observability requirement) |
 
-Dev only: pytest, pytest-cov, httpx (test client), ruff, mypy, pip-tools,
-pip-audit — all MIT/BSD/Apache.
+Dev only: pytest, pytest-cov, httpx2 (test client; Starlette's TestClient requires it, BSD-3),
+ruff, mypy, pip-tools, pip-audit — all MIT/BSD/Apache.
 
 Transitive tree: 46 packages in total, none under GPL/AGPL/SSPL
 (`requirements.txt` is the source of truth).
@@ -37,4 +37,37 @@ Transitive tree: 46 packages in total, none under GPL/AGPL/SSPL
 
 ## Frontend
 
-Added with the frontend step (see ADR 0009).
+Policy and rationale: [ADR 0009](adr/0009-frontend.md). Generated from the installed
+`node_modules` (verified 2026-11-12; `npm audit`: 0 vulnerabilities).
+
+| Package | Version | Licence | Used |
+|---|---|---|---|
+| @tanstack/react-query | 5.107.1 | MIT | runtime (bundled) |
+| react | 19.3.1 | MIT | runtime (bundled) |
+| react-dom | 19.3.1 | MIT | runtime (bundled) |
+| react-router-dom | 7.18.5 | MIT | runtime (bundled) |
+| @eslint/js | 10.0.1 | MIT | build / test / lint only |
+| @tailwindcss/vite | 4.3.5 | MIT | build / test / lint only |
+| @testing-library/jest-dom | 7.0.1 | MIT | build / test / lint only |
+| @testing-library/react | 16.3.3 | MIT | build / test / lint only |
+| @testing-library/user-event | 14.6.10 | MIT | build / test / lint only |
+| @types/node | 22.20.5 | MIT | build / test / lint only |
+| @types/react | 19.3.0 | MIT | build / test / lint only |
+| @types/react-dom | 19.3.0 | MIT | build / test / lint only |
+| @vitejs/plugin-react | 6.3.0 | MIT | build / test / lint only |
+| eslint | 10.14.0 | MIT | build / test / lint only |
+| eslint-plugin-react-hooks | 7.1.1 | MIT | build / test / lint only |
+| globals | 17.14.0 | MIT | build / test / lint only |
+| jest-axe | 11.0.0 | MIT | build / test / lint only |
+| jsdom | 31.0.0 | MIT | build / test / lint only |
+| prettier | 3.10.1 | MIT | build / test / lint only |
+| tailwindcss | 4.3.5 | MIT | build / test / lint only |
+| typescript | 6.0.3 | Apache-2.0 | build / test / lint only |
+| typescript-eslint | 8.72.2 | MIT | build / test / lint only |
+| vite | 8.3.8 | MIT | build / test / lint only |
+| vitest | 5.1.0 | MIT | build / test / lint only |
+
+Transitive tree (`npm ls --all`): MIT 150, ISC 7, Apache-2.0 4, BSD 3, plus build/test-time
+**MPL-2.0** (`axe-core`, `lightningcss` — not bundled, not modified) and **CC-BY-4.0** data
+(`caniuse-lite`, build-time). No GPL/AGPL. 21 further entries are platform-specific optional
+binaries of the build tools.
