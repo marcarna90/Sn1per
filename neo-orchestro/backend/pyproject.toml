@@ -88,7 +88,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 minversion = "9.0"
 testpaths = ["tests"]
-addopts = "-ra --strict-markers --strict-config"
+addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
 pythonpath = ["src"]
 markers = [
   "unit: pure tests, no external services",
