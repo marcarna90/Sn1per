@@ -58,3 +58,10 @@ class ScopeViolationError(AppError):
 
     def __init__(self, message: str, *, reason: str) -> None:
         super().__init__(message, details={"reason": reason})
+
+
+class ServiceUnavailableError(AppError):
+    """A dependency (e.g. the task queue) is down; the request can be retried later."""
+
+    status_code = 503
+    code = "service_unavailable"

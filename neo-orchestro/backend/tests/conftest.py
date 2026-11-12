@@ -25,14 +25,21 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from neo_orchestro.api.app import create_app
-from neo_orchestro.api.deps import get_clock, get_resolver, get_session
+from neo_orchestro.api.deps import (
+    get_clock,
+    get_dispatcher,
+    get_registry,
+    get_resolver,
+    get_session,
+)
 from neo_orchestro.core.config import Settings
 from neo_orchestro.core.enums import Role
 from neo_orchestro.db.models import User
+from neo_orchestro.engines import DnsReconEngine, EngineRegistry
 from neo_orchestro.scope import StaticResolver
 from neo_orchestro.services.orgs import bootstrap_organization
 from neo_orchestro.services.users import UserService
-from support import PASSWORD, FakeClock, Tenant, principal_of
+from support import PASSWORD, FakeClock, FakeDnsClient, InMemoryDispatcher, Tenant, principal_of
 
 # Safe defaults so nothing ever reads a developer's real .env (explicit Settings are used in tests).
 os.environ.setdefault("NEO_ENV", "test")
@@ -163,11 +170,31 @@ TEST_DNS: dict[str, list[str]] = {
 
 
 @pytest.fixture
-def app(settings: Settings, db_session: Session, clock: FakeClock) -> Any:
+def dispatcher() -> InMemoryDispatcher:
+    return InMemoryDispatcher()
+
+
+@pytest.fixture
+def api_registry() -> EngineRegistry:
+    return EngineRegistry(
+        [DnsReconEngine(FakeDnsClient({"A": ["93.184.216.34"], "TXT": ['"v=spf1 -all"']}))]
+    )
+
+
+@pytest.fixture
+def app(
+    settings: Settings,
+    db_session: Session,
+    clock: FakeClock,
+    dispatcher: InMemoryDispatcher,
+    api_registry: EngineRegistry,
+) -> Any:
     application = create_app(settings)
     application.dependency_overrides[get_session] = lambda: db_session
     application.dependency_overrides[get_clock] = lambda: clock
     application.dependency_overrides[get_resolver] = lambda: StaticResolver(TEST_DNS)
+    application.dependency_overrides[get_dispatcher] = lambda: dispatcher
+    application.dependency_overrides[get_registry] = lambda: api_registry
     return application
 
 

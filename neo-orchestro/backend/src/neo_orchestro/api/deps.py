@@ -10,9 +10,11 @@ from sqlalchemy.orm import Session
 from neo_orchestro.core.config import Settings
 from neo_orchestro.core.enums import Role
 from neo_orchestro.core.errors import AuthenticationError, PermissionDeniedError
+from neo_orchestro.engines import EngineRegistry
 from neo_orchestro.scope import DnsPythonResolver, Resolver
 from neo_orchestro.services.auth import AuthService
 from neo_orchestro.services.context import Clock, Principal, RequestContext, require_role, utc_now
+from neo_orchestro.services.scans import ScanDispatcher
 
 _bearer = HTTPBearer(auto_error=False, description="Short-lived access token")
 
@@ -51,6 +53,22 @@ def get_resolver(settings: SettingsDep) -> Resolver:
 
 
 ResolverDep = Annotated[Resolver, Depends(get_resolver)]
+
+
+def get_registry(request: Request) -> EngineRegistry:
+    registry: EngineRegistry = request.app.state.registry
+    return registry
+
+
+RegistryDep = Annotated[EngineRegistry, Depends(get_registry)]
+
+
+def get_dispatcher(request: Request) -> ScanDispatcher:
+    dispatcher: ScanDispatcher = request.app.state.dispatcher
+    return dispatcher
+
+
+DispatcherDep = Annotated[ScanDispatcher, Depends(get_dispatcher)]
 
 
 def get_context(request: Request) -> RequestContext:

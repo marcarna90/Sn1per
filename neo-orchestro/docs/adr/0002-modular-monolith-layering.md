@@ -15,20 +15,24 @@ same image: `api` (FastAPI/uvicorn) and `worker` (Celery). Inside the package:
 
 ```
 api ─► services ─► repositories ─► db (models)
-          │
-          ├─► scope        (pure; resolver injected)
-          └─► orchestrator ─► engines (ports/adapters)
+          ├─► scope      (pure policy; resolver injected)
+          └─► engines    (ports + adapters + safe process runner)
+orchestrator (Celery app, runner, worker) ─► services, repositories, scope, engines
+api ─► orchestrator.dispatcher only (publishes a scan id by task name)
 core  (config, logging, errors, crypto primitives) — imported by all, imports none
 ```
 
 Rules (enforced by review and by an import-direction test,
 `tests/unit/test_architecture.py`):
 
-- `core/` and `scope/` import nothing from `api`, `services`, `repositories`,
-  `orchestrator` or `db`.
+- `core/`, `scope/` and `engines/` import nothing from `api`, `services`, `repositories`,
+  `orchestrator` or `db` (`engines` and `scope` do not import each other either).
+- `services/` never imports `orchestrator/` (the queue is a `ScanDispatcher` port).
 - `api/` routers are thin: parse → call a service → serialise.
 - Scan engines implement an `Engine` protocol; the orchestrator knows only the
-  protocol and an explicit registry (allowlist).
+  protocol and an explicit registry (allowlist, ADR 0007).
+- Services own transactions: each use case commits (or rolls back) itself, so audit rows
+  of *denied* actions survive the error that follows them.
 - External effects (DNS, subprocess, clock, Redis) are injected, so core logic
   is unit-testable without mocks of internals.
 

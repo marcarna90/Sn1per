@@ -26,3 +26,14 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
 - Tenant-scoped repositories, org-isolated services, RBAC enforced in both API and services,
   append-only audit of successes **and** denials, bootstrap CLI (`neo-orchestro create-org`).
 - 382 tests (unit, integration on real PostgreSQL/Redis, security); mutation-checked guards.
+- Orchestration (ADR 0007): scan requests are checked against scope, queued (id only) on
+  Celery/Redis and executed by a worker whose runner claims atomically, **re-validates scope at
+  execution**, honours cancellation and a hard deadline, keeps partial results, de-duplicates
+  findings and never leaks internal errors. Hardened Celery (JSON only, acks_late, no result
+  backend).
+- Engine framework (`neo_orchestro.engines`): allowlist registry, safe subprocess runner (no shell,
+  minimal env, process-group kill, resource limits, bounded output), normalised findings, first
+  engine `dns_recon` (DNS records + missing-SPF check).
+- API: `/engines`, `/scans` (202 + Location), `/scans/{id}`, `/scans/{id}/findings`, `/scans/{id}/cancel`.
+- 520 tests; 14/14 orchestration mutations and 6/6 subprocess-runner mutations detected.
+

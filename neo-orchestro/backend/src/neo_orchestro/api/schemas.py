@@ -1,12 +1,21 @@
 """Request and response schemas. Inputs forbid unknown fields (no mass assignment)."""
 
+import json
 import uuid
 from datetime import datetime
 from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr, model_validator
 
-from neo_orchestro.core.enums import AuditOutcome, NetworkClass, Role, ScopeKind
+from neo_orchestro.core.enums import (
+    AuditOutcome,
+    FindingCategory,
+    NetworkClass,
+    Role,
+    ScanStatus,
+    ScopeKind,
+    Severity,
+)
 from neo_orchestro.scope import DenyReason
 
 
@@ -123,3 +132,59 @@ class MetaOut(BaseModel):
     name: str
     version: str
     signature: str
+
+
+# ------------------------------------------------------------------ scans
+
+_MAX_PARAMS_BYTES = 8_192
+
+
+class ScanCreate(_Strict):
+    """Only what the client may choose. Status, organisation, requester and the scope
+    decision are server-controlled and rejected if sent."""
+
+    engine: str = Field(min_length=1, max_length=64)
+    target: str = Field(min_length=1, max_length=255)
+    params: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _bounded_params(self) -> Self:
+        if len(json.dumps(self.params, default=str)) > _MAX_PARAMS_BYTES:
+            raise ValueError("params are too large")
+        return self
+
+
+class ScanOut(_FromOrm):
+    id: uuid.UUID
+    engine: str
+    target: str
+    params: dict[str, Any]
+    status: ScanStatus
+    error_code: str | None
+    error_message: str | None
+    scope_decision: dict[str, Any] | None
+    requested_by_id: uuid.UUID | None
+    attempts: int
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
+    cancel_requested_at: datetime | None
+
+
+class FindingOut(_FromOrm):
+    id: uuid.UUID
+    scan_id: uuid.UUID
+    category: FindingCategory
+    severity: Severity
+    title: str
+    asset: str
+    description: str | None
+    evidence: dict[str, Any]
+    source_engine: str
+    created_at: datetime
+
+
+class EngineOut(BaseModel):
+    name: str
+    description: str
+    target_kinds: list[ScopeKind]

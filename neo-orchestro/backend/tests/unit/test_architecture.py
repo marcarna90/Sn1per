@@ -9,11 +9,12 @@ SRC = Path(__file__).resolve().parents[2] / "src" / "neo_orchestro"
 
 # package -> packages it must NOT import from
 FORBIDDEN: dict[str, set[str]] = {
-    "core": {"db", "scope", "repositories", "services", "api", "orchestrator"},
-    "scope": {"db", "repositories", "services", "api", "orchestrator"},
-    "db": {"repositories", "services", "api", "orchestrator", "scope"},
-    "repositories": {"services", "api", "orchestrator"},
-    "services": {"api"},
+    "core": {"db", "scope", "engines", "repositories", "services", "api", "orchestrator"},
+    "scope": {"db", "engines", "repositories", "services", "api", "orchestrator"},
+    "engines": {"db", "scope", "repositories", "services", "api", "orchestrator"},
+    "db": {"repositories", "services", "api", "orchestrator", "scope", "engines"},
+    "repositories": {"services", "api", "orchestrator", "engines"},
+    "services": {"api", "orchestrator"},
     "orchestrator": {"api"},
 }
 

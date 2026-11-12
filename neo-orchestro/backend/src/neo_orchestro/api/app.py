@@ -15,6 +15,8 @@ from neo_orchestro.api.v1 import router as v1_router
 from neo_orchestro.core.config import Settings, get_settings
 from neo_orchestro.core.logging import configure_logging
 from neo_orchestro.db.session import create_db_engine, create_session_factory
+from neo_orchestro.engines import default_registry
+from neo_orchestro.orchestrator.dispatcher import CeleryDispatcher
 
 _DESCRIPTION = (
     "Automated Security Assessment & Orchestration Platform. "
@@ -46,6 +48,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.session_factory = create_session_factory(engine)
     app.state.metrics = metrics
+    app.state.registry = default_registry(settings)  # the engine allowlist
+    app.state.dispatcher = CeleryDispatcher(settings)  # connects lazily, on first publish
 
     if settings.cors_origins:  # closed by default; credentials only for listed origins
         app.add_middleware(

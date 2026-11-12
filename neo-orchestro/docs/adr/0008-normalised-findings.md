@@ -20,7 +20,8 @@ persisted as rows of `findings`:
 | `title`, `description` | Human-readable, engine-agnostic |
 | `asset` | The host/URL/IP the finding is about |
 | `evidence` | JSONB: raw, engine-specific proof (kept for reports and audits) |
-| `fingerprint` | SHA-256 over `(category, asset, title, canonical evidence key)` — stable across runs |
+| `key` | Engine-chosen *identity* of the finding (e.g. `A:93.184.216.34`); volatile data (TTLs…) goes in `evidence` |
+| `fingerprint` | SHA-256 over the JSON array `[category, asset, title, key]` — unambiguous (no concatenation collisions), stable across runs |
 | `source_engine` | Which allowlisted engine produced it |
 
 - `UNIQUE (scan_id, fingerprint)` de-duplicates within a scan at the database level.

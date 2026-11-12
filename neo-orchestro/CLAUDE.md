@@ -34,17 +34,20 @@ backend/src/neo_orchestro/
   core/          config, logging, errors, security primitives (no I/O to DB)
   db/            engine/session, SQLAlchemy models
   scope/         pure scope engine (no DB, no network except injected resolver)
-  repositories/  org-scoped data access
-  services/      business logic (auth, scans, scope, audit)
+  engines/       engine port, allowlist registry, safe process runner, adapters
+  repositories/  org-scoped data access (+ one internal worker repository)
+  services/      business logic (auth, users, scope, scans, audit); owns transactions
   api/           FastAPI app: deps, v1 routers, schemas (thin)
-  orchestrator/  Celery app, tasks, engines (ports + adapters)
+  orchestrator/  Celery app, scan runner, dispatcher, worker entry point
 frontend/        React + TypeScript + Tailwind (Vite)
 docs/            architecture + ADRs
 ```
 
 Dependency direction: `api → services → repositories → db`;
-`services → scope`; `orchestrator → services`. `scope/` and `core/` import
-nothing from the layers above them. Routers contain no business logic.
+`services → scope, engines`; `orchestrator → services, repositories, scope, engines`.
+`core/`, `scope/` and `engines/` import nothing from the layers above them; `services/`
+never imports `orchestrator/` (the queue is a port). Enforced by
+`tests/unit/test_architecture.py`. Routers contain no business logic.
 
 ## Commands (backend, from `backend/`)
 

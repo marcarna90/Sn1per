@@ -1,6 +1,7 @@
 """Scope management and evaluation for one organisation."""
 
 import uuid
+from collections.abc import Iterable
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -21,6 +22,20 @@ from neo_orchestro.scope import (
 )
 from neo_orchestro.services.audit import AuditService
 from neo_orchestro.services.context import Principal, RequestContext, require_role
+
+
+def to_rules(entries: Iterable[ScopeEntry]) -> list[ScopeRule]:
+    """Convert stored entries to engine-ready rules (also used by the worker)."""
+    return [
+        ScopeRule(
+            id=str(e.id),
+            kind=e.kind,
+            value=e.value,
+            include_subdomains=e.include_subdomains,
+            network_class=e.network_class,
+        )
+        for e in entries
+    ]
 
 
 class ScopeService:
@@ -107,16 +122,7 @@ class ScopeService:
         self._session.commit()
 
     def rules(self) -> list[ScopeRule]:
-        return [
-            ScopeRule(
-                id=str(e.id),
-                kind=e.kind,
-                value=e.value,
-                include_subdomains=e.include_subdomains,
-                network_class=e.network_class,
-            )
-            for e in self._repo.list()
-        ]
+        return to_rules(self._repo.list())
 
     def engine(self, resolver: Resolver) -> ScopeEngine:
         return ScopeEngine(self.rules(), resolver, limits=self._limits)

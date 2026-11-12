@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
+from neo_orchestro.core.config import Settings
 from neo_orchestro.core.enums import Role, ScopeKind
 from neo_orchestro.core.security import issue_access_token, issue_refresh_token
 from neo_orchestro.db.models import User
@@ -58,6 +59,27 @@ MATRIX: list[tuple[str, str, dict[str, Any] | None, dict[str, int]]] = [
         {"viewer": 403, "analyst": 200, "admin": 200},
     ),
     ("GET", "/api/v1/audit-logs", None, {"viewer": 403, "analyst": 403, "admin": 200}),
+    ("GET", "/api/v1/engines", None, {"viewer": 200, "analyst": 200, "admin": 200}),
+    ("GET", "/api/v1/scans", None, {"viewer": 200, "analyst": 200, "admin": 200}),
+    (
+        "POST",
+        "/api/v1/scans",
+        {"engine": "dns_recon", "target": "app.acme.example.com"},
+        {"viewer": 403, "analyst": 202, "admin": 202},
+    ),
+    ("GET", f"/api/v1/scans/{RANDOM_ID}", None, {"viewer": 404, "analyst": 404, "admin": 404}),
+    (
+        "GET",
+        f"/api/v1/scans/{RANDOM_ID}/findings",
+        None,
+        {"viewer": 404, "analyst": 404, "admin": 404},
+    ),
+    (
+        "POST",
+        f"/api/v1/scans/{RANDOM_ID}/cancel",
+        None,
+        {"viewer": 403, "analyst": 404, "admin": 404},
+    ),
 ]
 
 
@@ -71,6 +93,8 @@ def ids(case: tuple[Any, ...]) -> str:
 @pytest.mark.parametrize("case", MATRIX, ids=ids)
 def test_rbac_matrix(
     client: TestClient,
+    db_session: Session,
+    settings: Settings,
     make_tenant: MakeTenant,
     make_user: MakeUser,
     login: Login,
@@ -79,6 +103,9 @@ def test_rbac_matrix(
 ) -> None:
     method, path, body, expected = case
     tenant = make_tenant()
+    ScopeService(db_session, principal_of(tenant.admin), settings).add_entry(
+        ScopeKind.domain, "acme.example.com", include_subdomains=True
+    )  # so POST /scans exercises RBAC, not the scope check
     user = make_user(tenant, f"{role}-user@acme.example.com", Role(role))
     response = client.request(method, path, json=body, headers=bearer(login(user.email, PASSWORD)))
     assert response.status_code == expected[role], response.text
@@ -281,3 +308,43 @@ def test_the_lockout_applies_over_http(client: TestClient, make_tenant: MakeTena
         "/api/v1/auth/login", json={"email": tenant.admin.email, "password": PASSWORD}
     )
     assert locked.status_code == 401  # even the right password
+
+
+@pytest.mark.security
+@pytest.mark.integration
+def test_scans_are_isolated_between_organisations(
+    client: TestClient,
+    db_session: Session,
+    settings: Settings,
+    make_tenant: MakeTenant,
+    login: Login,
+) -> None:
+    acme, globex = make_tenant("acme"), make_tenant("globex")
+    for tenant, domain in ((acme, "acme.example.com"), (globex, "globex.example.com")):
+        ScopeService(db_session, principal_of(tenant.admin), settings).add_entry(
+            ScopeKind.domain, domain, include_subdomains=True
+        )
+    acme_headers = bearer(login(acme.admin.email, PASSWORD))
+    mine = client.post(
+        "/api/v1/scans",
+        headers=acme_headers,
+        json={"engine": "dns_recon", "target": "app.acme.example.com"},
+    ).json()["id"]
+    globex_headers = bearer(login(globex.admin.email, PASSWORD))
+
+    assert client.get("/api/v1/scans", headers=globex_headers).json() == []
+    for method, path in [
+        ("GET", f"/api/v1/scans/{mine}"),
+        ("GET", f"/api/v1/scans/{mine}/findings"),
+        ("POST", f"/api/v1/scans/{mine}/cancel"),
+    ]:
+        assert client.request(method, path, headers=globex_headers).status_code == 404, path
+    # Globex cannot scan Acme's domain either: it is not in *their* scope.
+    theirs = client.post(
+        "/api/v1/scans",
+        headers=globex_headers,
+        json={"engine": "dns_recon", "target": "app.acme.example.com"},
+    )
+    assert theirs.status_code == 403
+    assert theirs.json()["error"]["details"]["reason"] == "not_in_scope"
+    assert client.get(f"/api/v1/scans/{mine}", headers=acme_headers).json()["status"] == "pending"
