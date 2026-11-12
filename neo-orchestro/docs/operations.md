@@ -95,6 +95,8 @@ the queue (AOF is enabled so queued scans survive a restart); scan results live 
 - **Not built here.** The Dockerfiles, Compose stack and CI workflow were statically validated
   only (`docker compose config`, `nginx -t`); no image was built in the authoring environment and
   base-image tags could not be checked against a registry. Build and run them first.
+- **The e2e suite is not in CI** and does not exercise the Docker images (it runs the same code
+  with host processes); see `e2e/README.md`.
 - **No stale-scan reaper.** If a worker dies and Redis loses the message, a scan can stay `running`
   forever (ADR 0007).
 - **No per-organisation concurrency limits or priorities.**

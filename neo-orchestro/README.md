@@ -18,6 +18,7 @@ auditable rule: **nothing runs against a target that has not been explicitly aut
 | Async orchestrator (Celery + Redis): queue, cancel, resume after crash, partial results, hard deadline | ✅ implemented, tested |
 | Engine framework (allowlist, safe subprocess runner, normalised findings) + first engine `dns_recon` | ✅ implemented, tested |
 | Web UI: dashboard, scans, scope, users, audit log, settings | ✅ implemented, tested |
+| Real-process end-to-end test (API + worker + nginx + fake DNS + Chromium) | ✅ [`e2e/`](e2e/README.md): 94 API + 22 browser checks green |
 | Docker Compose stack, CI, backups scripts | ✅ written — **images not built in the authoring environment** (see below) |
 | Nmap, Nuclei, OSINT, web/TLS checks, PDF/HTML/JSON reports | ⏳ roadmap (phases 3–6) |
 

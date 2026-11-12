@@ -16,6 +16,9 @@ make -C backend check          # ruff format --check, ruff check, mypy --strict,
 cd frontend && npm run check   # tsc, eslint, prettier --check, vitest
 ```
 
+Before a release (or when touching the API, the worker, nginx or the UI flows) also run `make e2e`
+([`e2e/README.md`](e2e/README.md)): real processes, real browser.
+
 Backend integration tests need PostgreSQL and Redis (see `.env.example`,
 `NEO_TEST_DATABASE_URL`). `NEO_REQUIRE_SERVICES=1` turns an unreachable service into a failure
 instead of a skip (CI sets it).

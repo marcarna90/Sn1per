@@ -41,7 +41,7 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
   users, audit log (filter + pagination) and settings (change password). Access token in memory
   only, HttpOnly refresh cookie, CSRF header, single-flight refresh, role-gated routes, explicit
   loading/error/empty/permission states, WCAG-oriented markup, French UI.
-- 74 frontend tests (client, auth, every screen, axe); 14/14 UI-safeguard mutations detected;
+- 75 frontend tests (client, auth, every screen, axe); 14/14 UI-safeguard mutations detected;
   `npm audit`: 0 vulnerabilities.
 - Delivery: backend and web Dockerfiles (hash-locked wheels only, non-root, no pip in the image,
   nginx-unprivileged with strict CSP and auth rate limiting), `docker-compose.yml` (internal
@@ -51,4 +51,21 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
 - Documentation: README, architecture (diagrams), operations guide, SECURITY, CONTRIBUTING.
 - **Not built here:** the images and CI were statically validated only (`docker compose config`,
   `nginx -t`) because the authoring environment has no Docker daemon.
+- End-to-end smoke test (`e2e/`, `make e2e`): real uvicorn + Celery worker + nginx (the shipped
+  `default.conf`) + PostgreSQL + Redis + a fake DNS server, driven over HTTP (94 checks) and with
+  Chromium/Playwright (22 checks) — including DNS rebinding while a scan is queued, reuse
+  detection of refresh tokens, tenant isolation, the append-only audit triggers and the nginx
+  rate limiter. Not run in CI yet.
 
+### Fixed
+- Web UI: a scan that finished while its findings were being polled could show « Terminé » next to
+  « Aucun résultat pour le moment » until a manual reload, because findings polling stopped without
+  a final refresh. `useScan` now refreshes the findings once when the scan leaves pending/running
+  (regression test added; found by the browser e2e run).
+- Web UI: the API client now drains the empty body of `204` responses; Chromium reported the logout
+  request as `net::ERR_ABORTED` otherwise (the server had processed it).
+
+### Verification (authoring environment, 2026-11-12)
+Backend: ruff format/check, mypy `--strict`, 531 tests, 96 % coverage (real PostgreSQL 16 + Redis 7);
+frontend: tsc, ESLint, Prettier, 75 tests, `npm audit` 0 vulnerabilities; `pip-audit` clean on both
+lock files; Alembic upgrade → downgrade → upgrade on a fresh database; e2e 94 + 22 checks green.

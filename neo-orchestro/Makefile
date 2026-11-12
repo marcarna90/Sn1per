@@ -1,5 +1,5 @@
 # Convenience targets. Backend/frontend have their own Makefile / npm scripts.
-.PHONY: up down logs ps create-org backup check-backend check-frontend check
+.PHONY: up down logs ps create-org backup check-backend check-frontend check e2e
 
 up:
 	docker compose up -d --build
@@ -28,3 +28,7 @@ check-frontend:
 	cd frontend && npm run check
 
 check: check-backend check-frontend
+
+# Real-process end-to-end smoke test (see e2e/README.md). Needs NEO_E2E_DATABASE_URL / NEO_E2E_REDIS_URL.
+e2e:
+	./e2e/run.sh
