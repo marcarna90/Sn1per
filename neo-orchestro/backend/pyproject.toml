@@ -32,7 +32,7 @@ dependencies = [
 dev = [
   "pytest>=9,<10",
   "pytest-cov>=6,<8",
-  "httpx>=0.28,<1",
+  "httpx2>=2.16,<3",
   "ruff>=0.17,<1",
   "mypy>=2.4,<3",
   "pip-tools>=7.5,<8",
@@ -66,7 +66,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S104", "S105", "S106", "S311", "PLR0915"]
+"tests/**" = ["S101", "S104", "S105", "S106", "S311", "PLR0915", "PLR0917"]
+"src/neo_orchestro/api/**" = ["PLR0917"]  # route signatures are FastAPI dependency lists
 "src/neo_orchestro/cli.py" = ["T20"]
 "migrations/**" = ["N999"]
 
@@ -93,7 +94,7 @@ ignore_missing_imports = true
 minversion = "9.0"
 testpaths = ["tests"]
 addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
-pythonpath = ["src"]
+pythonpath = ["src", "tests"]
 markers = [
   "unit: pure tests, no external services",
   "integration: needs real PostgreSQL (and Redis for some)",

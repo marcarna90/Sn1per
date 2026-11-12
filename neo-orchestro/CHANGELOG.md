@@ -17,3 +17,12 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
   hard-denied address classes (loopback, link-local, metadata, multicast, reserved) incl. mapped/6to4/NAT64
   forms, DNS answer validation with pinning, redirect guard, validated rule creation, dnspython resolver
   adapter. 192 unit/security tests; mutation-checked (ADR 0004).
+- Authentication and governance (ADR 0005, 0006): Argon2id passwords with policy, JWT access
+  tokens (HS256 pinned, separate audiences), rotating HttpOnly refresh cookie with reuse
+  detection, account lockout, CSRF header, per-request revalidation of role/activity/organisation.
+- API v1 (FastAPI): auth, users, scope (incl. dry-run check), audit log, meta; `/health/live`,
+  `/health/ready`, `/metrics`. Uniform error envelope (never echoes submitted values), request
+  ids, security headers, closed-by-default CORS, docs off in production.
+- Tenant-scoped repositories, org-isolated services, RBAC enforced in both API and services,
+  append-only audit of successes **and** denials, bootstrap CLI (`neo-orchestro create-org`).
+- 382 tests (unit, integration on real PostgreSQL/Redis, security); mutation-checked guards.

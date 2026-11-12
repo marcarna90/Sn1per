@@ -40,6 +40,11 @@ def _scrub(value: Any) -> Any:
     return value
 
 
+def scrub_mapping(data: dict[str, Any]) -> dict[str, Any]:
+    """Return a copy of ``data`` with sensitive values redacted (used before persisting details)."""
+    return {k: (_REDACTED if _is_sensitive(k) else _scrub(v)) for k, v in data.items()}
+
+
 def redact_secrets(
     _logger: object, _method: str, event_dict: MutableMapping[str, Any]
 ) -> MutableMapping[str, Any]:
