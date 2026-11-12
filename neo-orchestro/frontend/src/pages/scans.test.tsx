@@ -1,6 +1,6 @@
 import { screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { apiError, FakeBackend, status } from "../test/backend";
 import { makeFinding, makeScan, makeUser } from "../test/fixtures";
 import { renderApp } from "../test/render";
@@ -183,6 +183,44 @@ describe("scan detail", () => {
     expect(within(findings).getByText("Missing SPF record")).toBeInTheDocument();
     expect(within(findings).getByText("Faible")).toBeInTheDocument();
     expect(within(findings).getByText("Info")).toBeInTheDocument();
+  });
+
+  it("refreshes the findings when a scan finishes, without a page reload", async () => {
+    // Regression found by the browser e2e run. The findings requested while the scan was still
+    // running were empty; when the next scan poll reported « Terminé », findings polling stopped
+    // and nothing refetched them, leaving « Aucun résultat » next to a finished scan.
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let workerDone = false; // server state: the worker has finished and written its results
+      const backend: FakeBackend = new FakeBackend()
+        .signedIn(analyst())
+        .on("GET /api/v1/scans/scan-1", () => {
+          const calls = backend.called("GET", "/api/v1/scans/scan-1").length;
+          if (calls >= 2) workerDone = true; // finishes between the first and the second poll
+          return workerDone
+            ? detail({
+                status: "succeeded",
+                started_at: "2026-11-12T10:00:05Z",
+                finished_at: "2026-11-12T10:00:06Z",
+                attempts: 1,
+              })
+            : detail({ status: "running", started_at: "2026-11-12T10:00:05Z" });
+        })
+        .on("GET /api/v1/scans/scan-1/findings", () =>
+          workerDone ? [makeFinding({ title: "Missing SPF record" })] : [],
+        )
+        .install();
+      renderApp("/scans/scan-1");
+
+      expect(await screen.findByText("En cours")).toBeInTheDocument();
+      expect(await screen.findByText("Aucun résultat pour le moment.")).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(3100); // one polling round
+      expect(await screen.findByText("Terminé")).toBeInTheDocument();
+      const table = await screen.findByRole("table", { name: "Résultats du scan" });
+      expect(within(table).getByText("Missing SPF record")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("filters findings by severity through the API", async () => {

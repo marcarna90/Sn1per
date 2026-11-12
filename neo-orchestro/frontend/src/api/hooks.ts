@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { useAuth } from "../auth/context";
 import type {
   AuditLog,
@@ -59,15 +60,32 @@ export function useScans(params: { status?: ScanStatus | undefined; limit?: numb
 
 export function useScan(id: string) {
   const api = useApi();
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: ["scan", id],
     queryFn: () => api.get<Scan>(`/api/v1/scans/${id}`),
     // Follow a scan while it is queued or running.
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
+    refetchInterval: (q) => {
+      const status = q.state.data?.status;
       return status && ACTIVE.includes(status) ? POLL_MS : false;
     },
   });
+
+  // When a scan leaves pending/running its results are final. Findings polling stops at that
+  // moment, and the last findings request may have been answered before the worker wrote its
+  // results, so refresh them once (found by the browser e2e run).
+  const status = query.data?.status;
+  const seen = useRef<{ id: string; active: boolean } | null>(null);
+  useEffect(() => {
+    if (status === undefined) return;
+    const active = ACTIVE.includes(status);
+    if (seen.current?.id === id && seen.current.active && !active) {
+      void queryClient.invalidateQueries({ queryKey: ["findings", id] });
+    }
+    seen.current = { id, active };
+  }, [status, id, queryClient]);
+
+  return query;
 }
 
 export function useFindings(id: string, severity: Severity | undefined, polling: boolean) {

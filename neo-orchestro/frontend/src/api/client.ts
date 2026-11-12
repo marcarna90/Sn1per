@@ -160,7 +160,12 @@ export class ApiClient {
       response = await this.#send(method, path, options);
     }
 
-    if (response.status === 204) return undefined as T;
+    if (response.status === 204) {
+      // Drain the (empty) body: Chromium reports a fetch whose body is never consumed as
+      // `net::ERR_ABORTED`, even though the server answered (found by the browser e2e run).
+      await response.arrayBuffer();
+      return undefined as T;
+    }
     if (!response.ok) throw await toApiError(response);
     return (await response.json()) as T;
   }
