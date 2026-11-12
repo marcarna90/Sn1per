@@ -1,0 +1,123 @@
+# Neo-Orchestro — production-like stack.   Designed & Developed by Ronald TSR.
+#
+#   cp .env.example .env     # fill in the secrets (never commit .env)
+#   docker compose up -d --build
+#
+# Only the web container is published, on 127.0.0.1. Put a TLS-terminating reverse proxy in
+# front of it for anything but local evaluation.
+name: neo-orchestro
+
+x-backend: &backend
+  image: neo-orchestro-backend:${NEO_VERSION:-local}
+  build:
+    context: ./backend
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  environment: &backend-env
+    NEO_ENV: ${NEO_ENV:-production}
+    NEO_SECRET_KEY: ${NEO_SECRET_KEY:?set NEO_SECRET_KEY in .env (>= 32 random characters)}
+    NEO_DATABASE_URL: postgresql+pg8000://neo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/neo_orchestro
+    NEO_REDIS_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}@redis:6379/0
+    NEO_COOKIE_SECURE: ${NEO_COOKIE_SECURE:-true}
+    NEO_LOG_JSON: "true"
+    NEO_LOG_LEVEL: ${NEO_LOG_LEVEL:-INFO}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: neo
+      POSTGRES_DB: neo_orchestro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neo -d neo_orchestro"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # AOF so queued scans survive a restart. The password is read from the environment.
+    command: ["sh", "-c", 'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"']
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    volumes:
+      - redisdata:/data
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    environment:
+      <<: *backend-env
+      # nginx is the only peer on the internal network that reaches the API.
+      FORWARDED_ALLOW_IPS: "*"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    <<: *backend
+    command:
+      - celery
+      - -A
+      - neo_orchestro.orchestrator.worker:app
+      - worker
+      - -Q
+      - scans
+      - --concurrency=2
+      - --loglevel=INFO
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A neo_orchestro.orchestrator.worker:app inspect ping -d celery@$$HOSTNAME --timeout 5 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  web:
+    image: neo-orchestro-web:${NEO_VERSION:-local}
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:

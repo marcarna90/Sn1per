@@ -1,0 +1,11 @@
+# Development overlay: publish PostgreSQL and Redis on loopback so the API, worker and tests can
+# run on the host.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db redis
+services:
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"

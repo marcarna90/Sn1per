@@ -35,3 +35,4 @@ frontend/coverage/
 loot/
 reports/
 *.log
+backups/

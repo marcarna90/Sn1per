@@ -43,4 +43,12 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
   loading/error/empty/permission states, WCAG-oriented markup, French UI.
 - 74 frontend tests (client, auth, every screen, axe); 14/14 UI-safeguard mutations detected;
   `npm audit`: 0 vulnerabilities.
+- Delivery: backend and web Dockerfiles (hash-locked wheels only, non-root, no pip in the image,
+  nginx-unprivileged with strict CSP and auth rate limiting), `docker-compose.yml` (internal
+  network, only `web` published on loopback, read-only containers, capabilities dropped, required
+  secrets), dev overlay, backup/restore scripts, GitHub Actions CI (backend matrix 3.12/3.13 on
+  real PostgreSQL/Redis, frontend, images, secrets scan), Dependabot.
+- Documentation: README, architecture (diagrams), operations guide, SECURITY, CONTRIBUTING.
+- **Not built here:** the images and CI were statically validated only (`docker compose config`,
+  `nginx -t`) because the authoring environment has no Docker daemon.
 

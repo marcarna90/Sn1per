@@ -49,16 +49,24 @@ Dependency direction: `api → services → repositories → db`;
 never imports `orchestrator/` (the queue is a port). Enforced by
 `tests/unit/test_architecture.py`. Routers contain no business logic.
 
-## Commands (backend, from `backend/`)
+## Commands
 
 ```bash
-make install     # venv + locked deps
-make check       # ruff + mypy + pytest  (must be green before any commit)
-make test        # pytest (needs PostgreSQL + Redis, see .env.example)
-make migrate     # alembic upgrade head
-```
+# backend (from backend/)
+make install     # venv from the hash-locked requirements
+make check       # ruff format --check + ruff check + mypy --strict + pytest (must be green)
+make test        # pytest (needs PostgreSQL + Redis, see .env.example / NEO_TEST_DATABASE_URL)
+make lock        # regenerate requirements*.txt from pyproject.toml (review the diff)
+make audit       # pip-audit on the runtime lock
+python -m neo_orchestro.cli create-org ...   # bootstrap an organisation (password via stdin/prompt)
 
-Frontend (from `frontend/`): `npm run check` (tsc + eslint + prettier + vitest).
+# frontend (from frontend/)
+npm run check    # tsc + eslint + prettier --check + vitest
+npm run build
+
+# stack (from the project root)
+make up / down / logs / create-org / backup
+```
 
 ## Conventions
 
