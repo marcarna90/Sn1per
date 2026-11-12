@@ -251,3 +251,16 @@ def test_dns_failures_surface_as_engine_errors() -> None:
     with pytest.raises(EngineError) as caught:
         list(engine.run(ctx(params=engine.validate_params({"record_types": ["A"]}))))
     assert caught.value.code == "dns_error"
+
+
+@pytest.mark.unit
+def test_default_registry_points_dns_recon_at_the_configured_nameservers() -> None:
+    settings = Settings(
+        _env_file=None,  # type: ignore[call-arg]
+        secret_key="k" * 64,
+        database_url="postgresql+pg8000://u:p@localhost/db",
+        redis_url="redis://localhost:6379/0",
+        dns_nameservers="192.0.2.53",
+    )
+    engine = default_registry(settings).get("dns_recon")
+    assert engine._client._resolver.nameservers == ["192.0.2.53"]  # type: ignore[attr-defined]

@@ -4,12 +4,13 @@ It only *queries DNS about* the target; it never connects to the target's hosts,
 pinned address is needed. Engines that do connect must use ``ctx.pinned_ips``.
 """
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from typing import Any, Protocol
 
 import dns.exception
 import dns.resolver
 
+from neo_orchestro.core.dns import build_resolver
 from neo_orchestro.core.enums import FindingCategory, ScopeKind, Severity
 from neo_orchestro.engines.base import EngineContext, EngineError
 from neo_orchestro.engines.findings import NormalisedFinding
@@ -25,9 +26,11 @@ class DnsClient(Protocol):
 
 
 class DnsPythonClient:
-    def __init__(self, *, timeout: float = 5.0, resolver: Any = None) -> None:
+    def __init__(
+        self, *, timeout: float = 5.0, resolver: Any = None, nameservers: Sequence[str] = ()
+    ) -> None:
         self._timeout = timeout
-        self._resolver: Any = resolver or dns.resolver.Resolver()
+        self._resolver: Any = resolver or build_resolver(nameservers)
 
     def query(self, name: str, rdtype: str) -> list[str]:
         try:

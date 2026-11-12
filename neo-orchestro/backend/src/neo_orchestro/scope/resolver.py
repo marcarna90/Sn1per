@@ -10,6 +10,7 @@ from typing import Any, Protocol
 import dns.exception
 import dns.resolver
 
+from neo_orchestro.core.dns import build_resolver
 from neo_orchestro.scope.types import NoSuchDomainError, ResolutionError
 
 
@@ -54,10 +55,16 @@ class DnsPythonResolver:
     resolution fails: validating only part of the answer set would defeat pinning.
     """
 
-    def __init__(self, *, timeout: float = 5.0, resolver: _DnsLike | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        timeout: float = 5.0,
+        resolver: _DnsLike | None = None,
+        nameservers: Sequence[str] = (),
+    ) -> None:
         self._timeout = timeout
         # dns.resolver.Resolver.resolve has a wider signature than _DnsLike; duck-typed on purpose.
-        self._resolver: Any = resolver or dns.resolver.Resolver()
+        self._resolver: Any = resolver or build_resolver(nameservers)
 
     def resolve(self, hostname: str) -> Sequence[str]:
         qname = hostname if hostname.endswith(".") else f"{hostname}."  # absolute: no search list

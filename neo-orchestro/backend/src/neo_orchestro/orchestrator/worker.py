@@ -26,7 +26,9 @@ def _deps() -> WorkerDeps:
     return WorkerDeps(
         session_factory=get_session_factory(),
         registry=default_registry(settings),
-        resolver=DnsPythonResolver(timeout=settings.dns_timeout_seconds),
+        resolver=DnsPythonResolver(
+            timeout=settings.dns_timeout_seconds, nameservers=settings.dns_nameservers
+        ),
         settings=settings,
     )
 

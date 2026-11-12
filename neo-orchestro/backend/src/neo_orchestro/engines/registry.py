@@ -39,4 +39,7 @@ class EngineRegistry:
 
 def default_registry(settings: Settings) -> EngineRegistry:
     """The production allowlist. Add new engines here, deliberately, one at a time."""
-    return EngineRegistry([DnsReconEngine(DnsPythonClient(timeout=settings.dns_timeout_seconds))])
+    client = DnsPythonClient(
+        timeout=settings.dns_timeout_seconds, nameservers=settings.dns_nameservers
+    )
+    return EngineRegistry([DnsReconEngine(client)])

@@ -5,6 +5,7 @@ production mode refuses insecure combinations (ADR 0005).
 """
 
 from functools import lru_cache
+from ipaddress import ip_address
 from typing import Annotated, Any, Literal, Self
 
 from pydantic import BeforeValidator, Field, SecretStr, field_validator, model_validator
@@ -58,6 +59,8 @@ class Settings(BaseSettings):
     # --- scans / DNS ------------------------------------------------------------------
     scan_max_duration_seconds: int = Field(default=900, ge=10, le=86400)
     dns_timeout_seconds: float = Field(default=5.0, gt=0, le=30)
+    # Empty = the host's resolver. Set explicit IPs to use a trusted resolver (ADR 0004).
+    dns_nameservers: Annotated[list[str], NoDecode, BeforeValidator(_split_csv)] = []
 
     # --- database pool ----------------------------------------------------------------
     db_pool_size: int = Field(default=5, ge=1, le=50)
@@ -90,6 +93,18 @@ class Settings(BaseSettings):
     def _redis_scheme(cls, value: SecretStr) -> SecretStr:
         if not value.get_secret_value().startswith(("redis://", "rediss://")):
             raise ValueError("redis_url must start with redis:// or rediss://")
+        return value
+
+    @field_validator("dns_nameservers")
+    @classmethod
+    def _nameservers_are_ips(cls, value: list[str]) -> list[str]:
+        for item in value:
+            try:
+                ip_address(item)
+            except ValueError:
+                raise ValueError(
+                    f"dns_nameservers must be IP addresses, got {item[:40]!r}"
+                ) from None
         return value
 
     @field_validator("cors_origins")

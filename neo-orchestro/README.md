@@ -113,6 +113,7 @@ never stored in Git. Production mode refuses insecure combinations (non-secure c
 | `NEO_SCOPE_MIN_PREFIX_V4` / `_V6` | 16 / 48 | Smallest CIDR an organisation may authorise |
 | `NEO_SCAN_MAX_DURATION_SECONDS` | 900 | Hard scan deadline |
 | `NEO_DNS_TIMEOUT_SECONDS` | 5 | DNS lookup lifetime |
+| `NEO_DNS_NAMESERVERS` | empty (host resolver) | Comma-separated resolver IPs; use a trusted resolver |
 | `NEO_CORS_ORIGINS` | empty (closed) | Explicit origins only; `*` is rejected |
 | `NEO_LOG_LEVEL` / `NEO_LOG_JSON` / `NEO_METRICS_ENABLED` | INFO / false / true | Observability |
 

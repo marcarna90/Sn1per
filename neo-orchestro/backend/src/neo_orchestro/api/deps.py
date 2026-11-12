@@ -49,7 +49,9 @@ ClockDep = Annotated[Clock, Depends(get_clock)]
 
 
 def get_resolver(settings: SettingsDep) -> Resolver:
-    return DnsPythonResolver(timeout=settings.dns_timeout_seconds)
+    return DnsPythonResolver(
+        timeout=settings.dns_timeout_seconds, nameservers=settings.dns_nameservers
+    )
 
 
 ResolverDep = Annotated[Resolver, Depends(get_resolver)]

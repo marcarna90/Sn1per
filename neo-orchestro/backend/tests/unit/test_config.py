@@ -89,3 +89,23 @@ def test_cors_origins_parse_from_comma_separated_string() -> None:
 def test_wildcard_cors_origin_is_rejected() -> None:
     with pytest.raises(ValidationError, match="cors_origins"):
         make(cors_origins="*")
+
+
+@pytest.mark.unit
+def test_dns_nameservers_default_to_the_system_resolver() -> None:
+    assert make().dns_nameservers == []
+
+
+@pytest.mark.unit
+def test_dns_nameservers_parse_from_a_comma_separated_string() -> None:
+    s = make(dns_nameservers="9.9.9.9, 2606:4700:4700::1111")
+    assert s.dns_nameservers == ["9.9.9.9", "2606:4700:4700::1111"]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "bad", ["dns.example.com", "9.9.9", "9.9.9.9:53", "not an ip", "9.9.9.9;8.8.8.8"]
+)
+def test_dns_nameservers_must_be_ip_addresses(bad: str) -> None:
+    with pytest.raises(ValidationError, match="dns_nameservers"):
+        make(dns_nameservers=bad)

@@ -24,6 +24,7 @@ x-backend: &backend
     NEO_COOKIE_SECURE: ${NEO_COOKIE_SECURE:-true}
     NEO_LOG_JSON: "true"
     NEO_LOG_LEVEL: ${NEO_LOG_LEVEL:-INFO}
+    NEO_DNS_NAMESERVERS: ${NEO_DNS_NAMESERVERS:-}
 
 services:
   db:

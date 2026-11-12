@@ -6,6 +6,7 @@ import dns.exception
 import dns.resolver
 import pytest
 
+from neo_orchestro.core.dns import build_resolver
 from neo_orchestro.scope import (
     DnsPythonResolver,
     NoSuchDomainError,
@@ -89,3 +90,21 @@ def test_dnspython_resolver_fails_closed_on_infrastructure_errors(failure: Excep
     stub = _StubDnsResolver({"A": ["93.184.216.34"], "AAAA": failure})
     with pytest.raises(ResolutionError):
         DnsPythonResolver(resolver=stub).resolve("example.com")
+
+
+@pytest.mark.unit
+def test_build_resolver_uses_exactly_the_configured_nameservers() -> None:
+    resolver = build_resolver(["9.9.9.9", "2606:4700:4700::1111"])
+    assert resolver.nameservers == ["9.9.9.9", "2606:4700:4700::1111"]
+    assert resolver.search == []  # nothing is read from the host's resolv.conf
+
+
+@pytest.mark.unit
+def test_build_resolver_without_nameservers_follows_the_system_configuration() -> None:
+    assert isinstance(build_resolver([]), dns.resolver.Resolver)
+
+
+@pytest.mark.unit
+def test_the_scope_resolver_is_built_with_the_configured_nameservers() -> None:
+    resolver = DnsPythonResolver(nameservers=["192.0.2.53"])
+    assert resolver._resolver.nameservers == ["192.0.2.53"]
