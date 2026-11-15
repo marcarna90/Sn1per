@@ -49,8 +49,6 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
   secrets), dev overlay, backup/restore scripts, GitHub Actions CI (backend matrix 3.12/3.13 on
   real PostgreSQL/Redis, frontend, images, secrets scan), Dependabot.
 - Documentation: README, architecture (diagrams), operations guide, SECURITY, CONTRIBUTING.
-- **Not built here:** the images and CI were statically validated only (`docker compose config`,
-  `nginx -t`) because the authoring environment has no Docker daemon.
 - End-to-end smoke test (`e2e/`, `make e2e`): real uvicorn + Celery worker + nginx (the shipped
   `default.conf`) + PostgreSQL + Redis + a fake DNS server, driven over HTTP (94 checks) and with
   Chromium/Playwright (22 checks) — including DNS rebinding while a scan is queued, reuse
@@ -58,6 +56,13 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
   rate limiter. Not run in CI yet.
 
 ### Fixed
+- Worker image crashed at start-up (`No module named 'packaging'`): kombu's Redis transport imports
+  `packaging` but declares it only in its `redis` extra, and the project depended on `celery` and
+  `redis` separately. Now `celery[redis]` (one new hashed pin, `packaging` 26.3). Dev tools had hidden it
+  locally. Test `test_runtime_lock.py` checks the lock covers the extras the code relies on.
+- Web container returned 502 after the API container was recreated: nginx resolved `api` once at
+  start-up and kept the old IP. `default.conf` now resolves per request (`resolver 127.0.0.11` +
+  variable in `proxy_pass`); test `test_deployment_config.py`; proven with a forced IP change.
 - Web UI: a scan that finished while its findings were being polled could show « Terminé » next to
   « Aucun résultat pour le moment » until a manual reload, because findings polling stopped without
   a final refresh. `useScan` now refreshes the findings once when the scan leaves pending/running
@@ -69,3 +74,8 @@ All notable changes to Neo-Orchestro. Format: Keep a Changelog; versioning: SemV
 Backend: ruff format/check, mypy `--strict`, 531 tests, 96 % coverage (real PostgreSQL 16 + Redis 7);
 frontend: tsc, ESLint, Prettier, 75 tests, `npm audit` 0 vulnerabilities; `pip-audit` clean on both
 lock files; Alembic upgrade → downgrade → upgrade on a fresh database; e2e 94 + 22 checks green.
+- CI `images` job now starts the stack (`up --wait`, production mode), probes readiness through nginx
+  and recreates the API. (Steps replayed locally; the workflow itself has not run on GitHub.)
+- Docker verification (2026-11-15, authoring sandbox): images built (backend 294 MB, web 91 MB), all
+  six services healthy, api/worker non-root + read-only + no capabilities, no pip in the image,
+  e2e 94 + 22 checks green against the containers.

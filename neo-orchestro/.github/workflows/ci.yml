@@ -118,6 +118,22 @@ jobs:
           test "$uid" = "10001"
       - name: No pip in the backend image
         run: "! docker run --rm --entrypoint python neo-orchestro-backend:local -m pip --version"
+      # Found by the first real image run: the worker crashed at start-up (missing dependency in the
+      # runtime lock) and nginx kept a stale API address after the API was recreated.
+      - name: Stack starts and every service becomes healthy (production mode)
+        run: docker compose up -d --wait --wait-timeout 180
+      - name: Readiness through nginx (database + Redis)
+        run: curl -fsS http://127.0.0.1:8080/health/ready
+      - name: nginx follows the API after it is recreated (no stale upstream address)
+        run: |
+          docker compose up -d --force-recreate --no-deps --wait api
+          curl -fsS http://127.0.0.1:8080/health/ready
+      - name: Logs on failure
+        if: failure()
+        run: docker compose ps -a && docker compose logs --tail=80
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
 
   secrets:
     name: No secrets in the tree

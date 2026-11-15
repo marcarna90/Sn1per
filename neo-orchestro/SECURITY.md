@@ -42,8 +42,8 @@ the suite fails (a test that cannot fail protects nothing).
 
 See [`docs/operations.md#known-limitations`](docs/operations.md#known-limitations) and the "Known
 limits" sections of ADR 0004, 0005, 0006 and 0007. In particular: no MFA, no per-IP rate limiting
-in the app, no key rotation window, no public-suffix check, no stale-scan reaper, and the container
-images are unbuilt in the authoring environment.
+in the app, no key rotation window, no public-suffix check, no stale-scan reaper, and the CI workflow
+has not run yet (the images were built and run once in the authoring sandbox).
 
 ## Supported versions
 

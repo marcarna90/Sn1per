@@ -19,13 +19,13 @@ auditable rule: **nothing runs against a target that has not been explicitly aut
 | Engine framework (allowlist, safe subprocess runner, normalised findings) + first engine `dns_recon` | ✅ implemented, tested |
 | Web UI: dashboard, scans, scope, users, audit log, settings | ✅ implemented, tested |
 | Real-process end-to-end test (API + worker + nginx + fake DNS + Chromium) | ✅ [`e2e/`](e2e/README.md): 94 API + 22 browser checks green |
-| Docker Compose stack, CI, backups scripts | ✅ written — **images not built in the authoring environment** (see below) |
+| Docker images + Compose stack, CI, backup scripts | ✅ built and run once; e2e green on the Docker stack · CI workflow not yet run |
 | Nmap, Nuclei, OSINT, web/TLS checks, PDF/HTML/JSON reports | ⏳ roadmap (phases 3–6) |
 
-> **Honest limits.** The Docker images, the Compose stack and the CI workflow were written
-> and statically validated (`docker compose config`, a real `nginx -t`) but **never built or run**
-> in the authoring sandbox (no Docker daemon). Run `docker compose build` and the CI before relying
-> on them. See [`docs/operations.md`](docs/operations.md#known-limitations).
+> **Honest limits.** The images and the Compose stack were built and run once in the authoring
+> sandbox and passed the e2e suites there (see [`docs/operations.md`](docs/operations.md#known-limitations)),
+> which found and fixed two real defects (worker crash, stale nginx upstream). The GitHub Actions
+> workflow has not run yet, and nothing was tested on Docker Desktop or behind production TLS.
 
 ## Quick start (Docker Compose)
 

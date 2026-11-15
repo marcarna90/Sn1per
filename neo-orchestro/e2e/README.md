@@ -44,7 +44,9 @@ Needs: the backend venv, Node + Playwright with Chromium (`require('playwright')
 
 ## What it does not prove
 
-- The Docker images and Compose file are **not** exercised (the host's nginx and Python are used).
+- `run.sh` itself uses host processes, not the Docker images. The same scripts were also run once against the
+  Compose stack (publish the API on loopback, point `NEO_DNS_NAMESERVERS` at a fake DNS on the bridge gateway,
+  and give `E2E_WORKER_CTL` a wrapper around `docker compose stop/up worker`); that is not automated.
 - No TLS: the e2e runs in `NEO_ENV=development` with `NEO_COOKIE_SECURE=false`; production-mode
   guards are covered by unit tests only.
 - DNS answers are fake and nothing ever connects to a scanned address (the only engine, `dns_recon`,

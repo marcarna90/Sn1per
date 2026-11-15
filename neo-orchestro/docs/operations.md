@@ -92,9 +92,14 @@ the queue (AOF is enabled so queued scans survive a restart); scan results live 
 
 ## Known limitations
 
-- **Not built here.** The Dockerfiles, Compose stack and CI workflow were statically validated
-  only (`docker compose config`, `nginx -t`); no image was built in the authoring environment and
-  base-image tags could not be checked against a registry. Build and run them first.
+- **Images verified once, outside CI.** The images were built and the full stack (db, redis,
+  migrate, api, worker, web) was run with Docker Engine 29 / Compose v5 in the authoring sandbox
+  (2026-11-15), and the e2e suites (94 API + 22 browser checks) passed against it. That run needed the
+  sandbox's TLS-proxy certificate injected into a scratch copy of the Dockerfiles (not in the repo).
+  Never exercised: the GitHub Actions workflow itself, Docker Desktop on Windows/macOS, and
+  production TLS. Base images are tags, not digests. `db` and `redis` are the official images with
+  their default (root entrypoint) settings: only `api`, `worker` and `web` are read-only, non-root and
+  capability-free.
 - **The e2e suite is not in CI** and does not exercise the Docker images (it runs the same code
   with host processes); see `e2e/README.md`.
 - **No stale-scan reaper.** If a worker dies and Redis loses the message, a scan can stay `running`
