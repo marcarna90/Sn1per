@@ -19,7 +19,8 @@ dependencies = [
   "sqlalchemy>=2.1,<2.2",
   "pg8000>=1.31,<2",
   "alembic>=1.20,<2",
-  "celery>=5.7,<6",
+  # [redis] pulls kombu[redis] (packaging): kombu's Redis transport imports it but only declares it there.
+  "celery[redis]>=5.7,<6",
   "redis>=8,<9",
   "argon2-cffi>=25.1,<26",
   "pyjwt>=2.15,<3",

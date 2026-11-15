@@ -16,6 +16,7 @@ Neo-Orchestro itself has no licence chosen yet (all rights reserved).
 | pg8000 | 1.31.6 | BSD | Pure-Python PostgreSQL driver, no copyleft (ADR 0003) |
 | alembic | 1.20.1 | MIT | Schema migrations (required stack) |
 | celery / redis | 5.7.0 / 8.1.0 | BSD-3 / MIT | Asynchronous orchestrator + broker client (required stack) |
+| packaging (via `celery[redis]`) | 26.3 | Apache-2.0 OR BSD-2 | Imported by kombu's Redis transport but declared only in its `redis` extra; without it the worker image crashes at start-up (found by the first real image run) |
 | argon2-cffi | 25.1.0 | MIT | Argon2id password hashing (ADR 0005) |
 | pyjwt | 2.15.1 | MIT | Signed access/refresh tokens |
 | dnspython | 2.9.2 | ISC | DNS resolution with timeouts for scope pinning and recon |
