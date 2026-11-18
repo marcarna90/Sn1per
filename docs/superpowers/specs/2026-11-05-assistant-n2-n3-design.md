@@ -134,3 +134,24 @@ Mis à jour :
 - Exécution d'actions de réponse (blocage, isolement, désactivation).
 - Réécriture du moteur de détection, d'extraction ou de la bibliothèque de règles existants.
 - Autres SIEM que ceux déjà gérés par le réglage SIEM actuel.
+
+## 12. Extension (2026-11-18) : requêtes console Elasticsearch dans l'Alert Workflow
+
+**Demande.** Ajouter, quand l'analyste colle une alerte, des requêtes de console (Kibana Dev Tools) du style `GET index-AAAA.MM.JJ,…/_search?size=0&format=yaml&filter_path=aggregations.*.buckets` avec un corps JSON (filtre `range` + `term`, agrégations `terms`). Emplacement précisé par l'utilisateur : **Alert Workflow** (et non l'onglet Investigation).
+
+**Ce qui a été fait** (carte « Requêtes console Dev Tools (Elasticsearch) », après « Requêtes de pivot ») :
+
+- **Index et plage.** Les index journaliers sont déduits de la ligne `Index:` de l'alerte (`base-AAAA.MM.JJ`, un par jour UTC couvert). Plage = première occurrence −1 h → dernière +1 h. Un champ « décalage de l'heure de l'alerte par rapport à UTC » corrige le fuseau du SIEM. Sans heures dans l'alerte : fenêtre relative signalée. Index illisible : `<INDEX>` + avertissement. Plus de 14 jours : motif `base-*`.
+- **Issues de l'alerte (toutes familles).** Volume dans le temps (`date_histogram`), répartition par champs clés, aperçu de 20 événements, baseline sur 7 jours. Les critères de la règle (`IS`, `IS_NOT`, `IS_ONE_OF`, `IS_NOT_ONE_OF`, champs avec points) sont convertis en `filter` / `must_not`. Une partie contenant `OR` ou un opérateur non géré n'est jamais convertie en silence : une note l'indique.
+- **Pivot sur une entité** (compte, IP, hôte, préremplie depuis l'alerte), fenêtre de 24 h avant la première occurrence à 1 h après la dernière. Active Directory (`winlog.*`) : postes NTLM 4776 (le cas de l'utilisateur), échecs 4625, sessions 4624, Kerberos 4768/4769, verrouillages 4740, modifications de compte. CEF : communications, volume sortant (`bytesOut`), URL. Pour toutes : première et dernière occurrence sur 30 jours.
+- **Famille d'index** déduite du nom de l'index et des champs (`-ad`/`winlog` → AD ; `cef`/`sourceAddress`… → CEF ; sinon générique).
+- **Copie** par requête ou « Copier toutes les requêtes » (titres en commentaires `#`).
+- **Sécurité.** Le contenu de l'alerte est non fiable : valeurs insérées via `JSON.stringify` et `esc()`, nom d'index validé (`[A-Za-z0-9._*,-]`). Rien n'est exécuté ni envoyé.
+
+**Correctifs apportés à l'existant** (présents dans le fichier d'origine) :
+
+1. Deux fonctions `upd` coexistaient (Alert Workflow et dossiers) : la seconde écrasait la première, si bien que le verdict et le ticket de l'Alert Workflow ne se mettaient jamais à jour. Celle de l'Alert Workflow est renommée `awUpd`.
+2. Le KQL/Lucene de la règle ne reconnaissait pas les champs contenant un point (`winlog.event_id`) : « Critère non reconnu ». Corrigé.
+3. Le champ « Field to investigate » est lu en entier même avec des points (il était tronqué à `winlog`), et les valeurs impliquées (comptes, hôtes) sont lues en plus des IP.
+
+**Limites.** Les requêtes sont générées, **pas exécutées** : aucun cluster Elasticsearch n'a été interrogé. Les noms de champs (`winlog.*` usuels, CEF) et le type des champs (`keyword` ou `ip`) dépendent de votre mapping ; un CIDR dans `terms` n'est valable que sur un champ de type `ip`. Les requêtes valident comme JSON et leur structure suit l'exemple fourni.

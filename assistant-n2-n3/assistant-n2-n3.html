@@ -140,6 +140,13 @@ code{font:12px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
 #n3-body textarea{min-height:90px}
 .n3-lead{margin-bottom:8px}
 @media(max-width:720px){.n3-tab{flex:1 1 auto;text-align:center}}
+
+/* v6 : requêtes console de l'Alert Workflow */
+.cq-ctl{margin:10px 0}
+.cq-ctl input[type=number]{max-width:90px}
+.cq-ctl input:not([type=number]){max-width:240px}
+.cq-q{margin:10px 0}.cq-q .xh{margin-bottom:2px}.cq-q p{margin:2px 0 4px}
+@media(max-width:720px){.cq-ctl input,.cq-ctl input[type=number]{max-width:100%;width:100%}}
 </style>
 <nav><div class="logo">Assistant N2/N3<small>Analyste SOC · QRadar &amp; multi-SIEM</small></div>
 <button data-v="dash" class="on">Dashboard</button><button data-v="inv">Investigation</button><button data-v="case">Dossiers</button><button data-v="cli">Clients</button><button data-v="alt">Alert Workflow</button><button data-v="ioc">IOC Analysis</button><button data-v="hunt">Threat Hunting</button><button data-v="qradar">QRadar N2</button><button data-v="n3">Parcours N3</button><button data-v="mitre">MITRE ATT&amp;CK</button><button data-v="rep">Reports</button><button data-v="set">Settings</button></nav>
@@ -148,7 +155,7 @@ code{font:12px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
 <section class="view" id="v-inv"><h2>Investigation</h2><div class="card"><h3>Log à analyser (Windows, Sysmon, Linux, web, cloud, réseau)</h3>
 <textarea id="in" placeholder="Collez un ou plusieurs événements : XML Windows, texte de l’Observateur (FR/EN), clé=valeur, JSON (ECS, Sentinel, Entra ID), CEF, LEEF, syslog Linux, accès web Apache/Nginx/IIS…"></textarea>
 <div class="ibar"><button class="btn" id="go">Analyser</button><span id="ex" class="sl"></span></div><details class="fmts"><summary>Formats reconnus automatiquement</summary><ul id="fl"></ul><p class="mu sm">Plusieurs événements : séparez-les par une ligne vide, ou collez un événement par ligne (syslog, accès web, JSON, CEF). Les lots sont triés automatiquement.</p></details></div><div id="out" class="grid" style="margin-top:12px"></div></section>
-<section class="view" id="v-case"></section><section class="view" id="v-cli"></section><section class="view" id="v-alt"><h2>Alert Workflow (SOC N2)</h2><div class="card"><h3>1. Collez l’alerte du SIEM</h3><textarea id="at" placeholder="Rule ... has generated N events in the last 4:00:00. ..."></textarea><button class="btn" id="aa">Analyser l’alerte</button><button class="btn g" id="ad">Exemple</button></div><div id="ao" style="margin-top:12px" class="grid"></div></section><section class="view" id="v-ioc"></section><section class="view" id="v-hunt"><h2>Threat Hunting</h2><div class="card"><h3>Lot de logs (blocs séparés par une ligne vide, ou JSON, un objet par ligne)</h3><textarea id="hl" placeholder="Collez plusieurs événements, ou chargez une démo"></textarea><h3 style="margin-top:10px">Alertes déjà levées (hôtes, IP, comptes, séparés par espaces ou virgules)</h3><textarea id="al" style="min-height:44px"></textarea><button class="btn" id="hr">Lancer le hunting</button><span id="hd"></span></div><div id="ho" style="margin-top:12px"></div><h2 style="margin-top:18px">Requêtes de hunting</h2><div class="grid" id="hq"></div></section><section class="view" id="v-mitre"></section><section class="view" id="v-rep"></section>
+<section class="view" id="v-case"></section><section class="view" id="v-cli"></section><section class="view" id="v-alt"><h2>Alert Workflow (SOC N2)</h2><div class="card"><h3>1. Collez l’alerte du SIEM</h3><textarea id="at" placeholder="Rule ... has generated N events in the last 4:00:00. ..."></textarea><button class="btn" id="aa">Analyser l’alerte</button><button class="btn g" id="ad">Exemple CEF</button><button class="btn g" id="ad2">Exemple AD</button></div><div id="ao" style="margin-top:12px" class="grid"></div></section><section class="view" id="v-ioc"></section><section class="view" id="v-hunt"><h2>Threat Hunting</h2><div class="card"><h3>Lot de logs (blocs séparés par une ligne vide, ou JSON, un objet par ligne)</h3><textarea id="hl" placeholder="Collez plusieurs événements, ou chargez une démo"></textarea><h3 style="margin-top:10px">Alertes déjà levées (hôtes, IP, comptes, séparés par espaces ou virgules)</h3><textarea id="al" style="min-height:44px"></textarea><button class="btn" id="hr">Lancer le hunting</button><span id="hd"></span></div><div id="ho" style="margin-top:12px"></div><h2 style="margin-top:18px">Requêtes de hunting</h2><div class="grid" id="hq"></div></section><section class="view" id="v-mitre"></section><section class="view" id="v-rep"></section>
 <section class="view" id="v-n3">
   <h2>Parcours N3 · hunting, DFIR, réponse et détection</h2>
   <p class="qr-lead n3-lead">Quatre modules pour l’analyste N3 : chasser par hypothèses, trier une preuve numérique, piloter la réponse puis le retour d’expérience, et améliorer les détections. Ce sont des aides-mémoire et des générateurs : l’outil n’exécute aucune action sur votre SIEM, vos postes ou votre cloud, et chaque requête est à valider dans votre environnement.</p>
@@ -521,11 +528,11 @@ const CH=["Identifier les hôtes sources (terms sur sourceAddress)","Vérifier l
 let AW=null;
 const cpy=async(b,s)=>{try{await navigator.clipboard.writeText(s);b.textContent="Copié"}catch(e){b.textContent="Copie impossible"}};
 function parseAlert(t){const g=re=>{const m=t.match(re);return m?m[1].trim():""},sec=(t.split(/Involved:/i)[1]||"").split(/First event/i)[0];
-return{name:g(/Rule name:\s*([^\n]+)/i)||g(/Rule "([^"]+)"/i),sev:g(/Rule severity:\s*(\w+)/i),idx:g(/Index:\s*(\S+)/i),n:g(/generated\s+(\d+)\s+events/i),win:g(/in the last\s+([\d:]+)/i),crit:g(/Detection criteria:\s*([^\n]+)/i),fld:g(/Field to investigate:\s*(\w+)/i),first:g(/First event time:\s*([^\n]+)/i),last:g(/Last event time:\s*([^\n]+)/i),mitre:[...new Set(t.match(/\bT\d{4}(?:\.\d{3})?\b/g)||[])],ips:[...new Set(sec.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[])]}}
-function crit2q(c){const k=[],l=[];let u=false;c.split(/\s+AND\s+/i).map(x=>x.trim()).filter(Boolean).forEach(p=>{const m=p.match(/^(\w+)\s+(IS_NOT_ONE_OF|IS_ONE_OF|IS_NOT|IS)\s+(.+)$/i);if(!m){u=true;return}const f=m[1],o=m[2].toUpperCase(),vs=(m[3].match(/"([^"]*)"/g)||[m[3]]).map(s=>s.replace(/^"|"$/g,"")),one=o.includes("ONE_OF"),neg=o.includes("NOT"),kv=one?`${f}:("${vs.join('" or "')}")`:`${f}:"${vs[0]}"`,lv=one?`${f}:("${vs.join('" OR "')}")`:`${f}:"${vs[0]}"`;k.push(neg?"not "+kv:kv);l.push(neg?"NOT "+lv:lv)});return{kql:k.join(" and "),lucene:l.join(" AND "),unsup:u}}
+return{name:g(/Rule name:\s*([^\n]+)/i)||g(/Rule "([^"]+)"/i),sev:g(/Rule severity:\s*(\w+)/i),idx:g(/Index:\s*(\S+)/i),n:g(/generated\s+(\d+)\s+events/i),win:g(/in the last\s+([\d:]+)/i),crit:g(/Detection criteria:\s*([^\n]+)/i),fld:g(/Field to investigate:\s*([\w.@-]+)/i),first:g(/First event time:\s*([^\n]+)/i),last:g(/Last event time:\s*([^\n]+)/i),mitre:[...new Set(t.match(/\bT\d{4}(?:\.\d{3})?\b/g)||[])],ips:[...new Set(sec.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[])],vals:[...new Set(sec.split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&!/^\(\d+\)$/.test(x)&&!/^-{3,}$/.test(x)))].slice(0,50)}}
+function crit2q(c){const k=[],l=[];let u=false;c.split(/\s+AND\s+/i).map(x=>x.trim()).filter(Boolean).forEach(p=>{const m=p.match(/^([\w.@-]+)\s+(IS_NOT_ONE_OF|IS_ONE_OF|IS_NOT|IS)\s+(.+)$/i);if(!m){u=true;return}const f=m[1],o=m[2].toUpperCase(),vs=(m[3].match(/"([^"]*)"/g)||[m[3]]).map(s=>s.replace(/^"|"$/g,"")),one=o.includes("ONE_OF"),neg=o.includes("NOT"),kv=one?`${f}:("${vs.join('" or "')}")`:`${f}:"${vs[0]}"`,lv=one?`${f}:("${vs.join('" OR "')}")`:`${f}:"${vs[0]}"`;k.push(neg?"not "+kv:kv);l.push(neg?"NOT "+lv:lv)});return{kql:k.join(" and "),lucene:l.join(" AND "),unsup:u}}
 function ticket(A){const a=A.a,P={Critical:"P1",High:"P2",Medium:"P3",Low:"P4"}[a.sev]||"P3",ck=CH.filter((_,i)=>A.chk[i]).map(x=>"- "+x);
 return[`#[${a.sev||"?"}] ${a.name} - ${A.ent}`,`Priorité : ${P} | Index : ${a.idx} | Créé le ${new Date().toLocaleString("fr-FR")}`,"","#Résumé",`Règle ${a.name} : ${a.n} événements entre ${a.first} et ${a.last}. Incident confirmé par l’analyste N2.`,"","#Entités impactées",A.ent,"","#Constats",A.obs,"","#IOC (destinations)",a.ips.join(", ")||"-","","#MITRE ATT&CK",a.mitre.join(", ")||"-","","#Vérifications effectuées",...(ck.length?ck:["- aucune cochée"]),"","#Requêtes utilisées (KQL)","~"+(A.q.kql||"-"),...A.pv.slice(0,2).map(x=>"~"+x),"","#Actions recommandées","- Confinement : isoler les hôtes impactés, bloquer les destinations au pare-feu ou proxy.","- Éradication : identifier et supprimer le processus et la persistance, réinitialiser les identifiants exposés.","- Escalade N3 si mouvement latéral, exfiltration ou compte privilégié.","","Rédigé par : analyste SOC N2"]}
-function upd(){const A=AW,v=$("#av").value,el=$("#tk"),a=A.a;A.v=v;A.ent=$("#aent").value.trim();A.obs=$("#aobs").value.trim();
+function awUpd(){const A=AW,v=$("#av").value,el=$("#tk"),a=A.a;A.v=v;A.ent=$("#aent").value.trim();A.obs=$("#aobs").value.trim();
 if(!v){el.innerHTML=`<p class="mu">Choisissez un verdict.</p>`;return}
 if(v!="inc"){const n=`Alerte « ${a.name} » analysée par N2 le ${new Date().toLocaleString("fr-FR")} : ${v=="fp"?"faux positif, clôture sans ticket":"à surveiller, réévaluation sous 24 h"}. Constats : ${A.obs||"-"}.`;el.innerHTML=`<p><b>${v=="fp"?"Faux positif : aucun ticket d’incident.":"À surveiller : aucun ticket pour l’instant."}</b></p>${pre(n)}<button class="btn g" id="tc">Copier la note</button>`;$("#tc").onclick=e=>cpy(e.target,n);return}
 if(!A.ent||!A.obs){el.innerHTML=`<p>Renseignez les hôtes impactés et les constats pour générer le ticket.</p>`;return}
@@ -540,16 +547,114 @@ if(a.mitre.some(x=>/^T1584/.test(x)))N.push("Le mapping T1584 (Resource Developm
 const h=a.first?new Date(a.first.replace(" ","T")).getHours():null;if(h!==null&&(h<6||h>=22))N.push("Activité débutant hors heures ouvrées (heure du SIEM).");
 if(!/action/i.test(a.crit))N.push("Le critère ne filtre pas sur l’action : le trafic peut avoir été bloqué.");
 if(q.unsup||/\sOR\s/i.test(a.crit))N.push("Opérateur non converti : complétez la requête manuellement.");
-AW={a,q,pv,aql,chk:{},v:"",ent:"",obs:""};
+AW={a,q,pv,aql,cq:[],con:null,chk:{},v:"",ent:"",obs:""};
 const d=(t,b)=>`<div class="card wide"><h3>${t}</h3>${b}</div>`;
 $("#ao").innerHTML=d("2. Analyse de l’alerte",`<table>${[["Règle",a.name],["Sévérité",a.sev],["Index",a.idx],["Événements",a.n+" sur "+a.win],["Période",a.first+" → "+a.last],["Champ à investiguer",fl],["MITRE (règle)",a.mitre.join(", ")]].map(([k,x])=>`<tr><td>${k}</td><td>${esc(x||"-")}</td></tr>`).join("")}</table><p><b>Destinations</b></p><table>${ips.map(ip=>`<tr><td>${esc(ip)}</td><td>${link("IP",ip)}</td></tr>`).join("")}</table>${li(N)}`)
 +d("3. Requête de la règle",`<b>KQL</b>${pre(q.kql||"Critère non reconnu")}<b>Lucene</b>${pre(q.lucene||"-")}<p class="mu">Plage Kibana : ${esc(a.first)} → ${esc(a.last)}, élargie de ±1 h, puis 7 jours pour la baseline. Les champs sont ceux de la règle : adaptez-les à votre mapping (source.ip, destination.ip…) et privilégiez les champs keyword.</p>`)
 +d("Requêtes de pivot",pv.map((x,i)=>`<b>${PL[i]}</b>${pre(x)}`).join("")+(aql?`<b>QRadar AQL</b>${pre(aql)}`:"")+`<p class="mu">Dans Discover ou Lens : terms sur sourceAddress, deviceAction, destinationPort, requestURL, bytesOut.</p>`)
-+d("4. Investigation",`${CH.map((c,i)=>`<label style="display:block"><input type="checkbox" data-c="${i}"> ${esc(c)}</label>`).join("")}<h3 style="margin-top:12px">Hôtes ou comptes impactés</h3><textarea id="aent" style="min-height:50px"></textarea><h3 style="margin-top:8px">Constats</h3><textarea id="aobs" style="min-height:70px"></textarea><h3 style="margin-top:8px">Verdict</h3><select id="av" style="background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px"><option value="">Non évalué</option><option value="fp">Faux positif</option><option value="watch">À surveiller</option><option value="inc">Incident confirmé</option></select>`)
++d("Requêtes console Dev Tools (Elasticsearch)",conHtml(a))+d("4. Investigation",`${CH.map((c,i)=>`<label style="display:block"><input type="checkbox" data-c="${i}"> ${esc(c)}</label>`).join("")}<h3 style="margin-top:12px">Hôtes ou comptes impactés</h3><textarea id="aent" style="min-height:50px"></textarea><h3 style="margin-top:8px">Constats</h3><textarea id="aobs" style="min-height:70px"></textarea><h3 style="margin-top:8px">Verdict</h3><select id="av" style="background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px"><option value="">Non évalué</option><option value="fp">Faux positif</option><option value="watch">À surveiller</option><option value="inc">Incident confirmé</option></select>`)
 +d("5. Décision et ticket",`<div id="tk"><p class="mu">Choisissez un verdict.</p></div><p class="mu">Le ticket est généré uniquement si l’incident est confirmé ; il est à coller dans votre outil de ticketing (aucune intégration directe).</p>`);
-document.querySelectorAll("[data-c]").forEach(b=>b.onchange=()=>{AW.chk[b.dataset.c]=b.checked;upd()});["#aent","#aobs"].forEach(s=>$(s).oninput=upd);$("#av").onchange=upd}
+document.querySelectorAll("[data-c]").forEach(b=>b.onchange=()=>{AW.chk[b.dataset.c]=b.checked;awUpd()});["#aent","#aobs"].forEach(s=>$(s).oninput=awUpd);$("#av").onchange=awUpd;conInit(a)}
 $("#aa").onclick=aw;
 $("#ad").onclick=()=>{$("#at").value=`Rule "X| CriticalEvent Outbound" has generated 11 events in the last 4:00:00.\nIndex: customerlog-talentys-X-cef\nRule name: X| CriticalEvent Outbound\nRule severity: Critical\nRule description: Tactic: Resource Development (TA0042) Technique: Compromise Infrastructure (T1584) Subtechnique: Web Services (T1584.006). A device on the network connects to a suspicious website.\nDetection criteria: criticalEvent IS "yes" AND destinationPort IS_NOT "123" AND sourceAddress IS_ONE_OF ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]\nField to investigate: destinationAddress\nDestination Addresses Involved: (3)\n------------------------------\n185.12.59.118\n38.110.46.252\n48.217.66.50\nFirst event time: 2026-10-27 02:20:07\nLast event time: 2026-10-27 05:30:59`;aw()};
+/* v6 : requêtes console Elasticsearch (Dev Tools) pour l’Alert Workflow */
+const CQ_AD={id:"winlog.event_id",user:"winlog.event_data.TargetUserName",ip:"winlog.event_data.IpAddress",ws:"winlog.event_data.Workstation",host:"winlog.computer_name",lt:"winlog.event_data.LogonType",subj:"winlog.event_data.SubjectUserName",st:"winlog.event_data.Status",dom:"winlog.event_data.TargetDomainName"};
+const CQ_CEF={src:"sourceAddress",dst:"destinationAddress",port:"destinationPort",act:"deviceAction",url:"requestURL",bytes:"bytesOut",su:"sourceUserName",du:"destinationUserName"};
+const CQ_AGG="size=0&format=yaml&filter_path=aggregations.*.buckets";
+const CQ_VAL="size=0&format=yaml&filter_path=aggregations.*.value_as_string";
+const CQ_HIT="size=20&track_total_hits=true&format=yaml&filter_path=hits.total,hits.hits._source";
+const CQ_TYPES=[["user","Compte"],["ip","Adresse IP"],["host","Hôte"]];
+
+function cqFam(a){const s=(a.idx||"")+" "+(a.crit||"")+" "+(a.fld||"");return /(^|[-_.])ad([-_.]|$)|winlog|wineventlog|windows/i.test(s)?"ad":/cef|firewall|proxy|\b(sourceAddress|destinationAddress|deviceAction|destinationPort)\b/i.test(s)?"cef":"gen"}
+function cqGuess(a){const v=(a.vals&&a.vals[0])||"",f=(a.fld||"").toLowerCase();return{type:isV4(v)?"ip":/host|computer|workstation|device|machine/.test(f)?"host":"user",val:v}}
+const cqPad=n=>String(n).padStart(2,"0");
+const cqIso=ms=>new Date(ms).toISOString().replace(/\.\d{3}Z$/,"Z");
+function cqTime(s,off){const m=String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);return m?Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])-off*36e5:NaN}
+function cqDays(a,b){const o=[],s=new Date(a);for(let d=Date.UTC(s.getUTCFullYear(),s.getUTCMonth(),s.getUTCDate());d<=b;d+=864e5){const x=new Date(d);o.push(x.getUTCFullYear()+"."+cqPad(x.getUTCMonth()+1)+"."+cqPad(x.getUTCDate()))}return o}
+/* Index journaliers « base-AAAA.MM.JJ » couvrant la plage ; motif générique au-delà de 14 jours. */
+function cqIdx(idx,from,to){if(!idx||!/^[A-Za-z0-9._*,\-]+$/.test(idx))return{list:["<INDEX>"],note:"Index absent ou illisible dans l’alerte : remplacez <INDEX> par le nom de l’index."};
+if(/[*,]/.test(idx))return{list:[idx],note:""};const base=idx.replace(/-\d{4}\.\d{2}\.\d{2}$/,""),days=cqDays(from,to);
+return days.length>14?{list:[base+"-*"],note:"Plus de 14 jours : motif d’index générique ; la plage @timestamp limite la recherche."}:{list:days.map(d=>base+"-"+d),note:""}}
+/* Critères de la règle (IS, IS_NOT, IS_ONE_OF, IS_NOT_ONE_OF) en clauses filter / must_not. */
+function cqCrit(c){const F=[],N=[];let u=false;String(c||"").split(/\s+AND\s+/i).map(x=>x.trim()).filter(Boolean).forEach(p=>{if(/\sOR\s/i.test(p)){u=true;return}const m=p.match(/^([\w.@-]+)\s+(IS_NOT_ONE_OF|IS_ONE_OF|IS_NOT|IS)\s+(.+)$/i);if(!m){u=true;return}const f=m[1],o=m[2].toUpperCase(),vs=(m[3].match(/"([^"]*)"/g)||[m[3]]).map(s=>s.replace(/^"|"$/g,"")),cl=o.includes("ONE_OF")?{terms:{[f]:vs}}:{term:{[f]:vs[0]}};(o.includes("NOT")?N:F).push(cl)});return{F,N,u}}
+
+const cqRng=(from,to)=>({range:{"@timestamp":{gte:cqIso(from),lte:cqIso(to)}}});
+const cqTerm=(f,v)=>({term:{[f]:v}});
+const cqTerms=(f,v)=>({terms:{[f]:v}});
+const cqT=(f,n,sub)=>{const o={terms:{field:f,size:n||10}};if(sub)o.aggs=sub;return o};
+const cqQ=(filter,mn)=>({query:{bool:Object.assign({filter},mn&&mn.length?{must_not:mn}:{})}});
+const cqMk=(t,why,idx,p,body)=>({t,why,text:`GET ${idx.join(",")}/_search?${p}\n${JSON.stringify(body,null,2)}`});
+const cqShould=(fs,v)=>({bool:{should:fs.map(f=>cqTerm(f,v)),minimum_should_match:1}});
+
+/* Requêtes déduites de l’alerte : volume, répartition, aperçu, baseline. */
+function cqRule(a,fam,c,ctx){const crit=cqCrit(a.crit),ent=a.vals&&a.vals.length&&a.fld?[cqTerms(a.fld,a.vals)]:[],F=[...crit.F,...ent],N=crit.N,Q=[],span=ctx.to-ctx.from,
+iv=span<=3*36e5?"5m":span<=12*36e5?"15m":span<=48*36e5?"1h":"6h",
+keys=fam=="ad"?[["evenement",CQ_AD.id],["compte",CQ_AD.user],["ip_source",CQ_AD.ip],["poste",CQ_AD.ws],["machine",CQ_AD.host]]:fam=="cef"?[["sources",CQ_CEF.src],["destinations",CQ_CEF.dst],["ports",CQ_CEF.port],["actions",CQ_CEF.act],["urls",CQ_CEF.url]]:[...new Set([...crit.F,...crit.N].map(x=>Object.keys(x.term||x.terms)[0]).concat(a.fld?[a.fld]:[]))].map(f=>[f.replace(/[^\w]+/g,"_"),f]),
+src=fam=="ad"?["@timestamp",CQ_AD.id,CQ_AD.user,CQ_AD.ip,CQ_AD.ws,CQ_AD.host,CQ_AD.lt,CQ_AD.st]:fam=="cef"?["@timestamp",CQ_CEF.src,CQ_CEF.dst,CQ_CEF.port,CQ_CEF.act,CQ_CEF.url,CQ_CEF.bytes]:null,
+w=[cqRng(ctx.from,ctx.to),...F];
+Q.push(cqMk("Volume dans le temps (critères de la règle)","Forme de la salve : régularité (beacon), pic isolé ou activité continue.",ctx.idx,CQ_AGG,Object.assign(cqQ(w,N),{aggs:{volume:{date_histogram:{field:"@timestamp",fixed_interval:iv}}}})));
+if(keys.length)Q.push(cqMk("Répartition par champs clés","Qui, vers quoi, avec quelle action : à comparer avec l’interprétation de la règle.",ctx.idx,CQ_AGG,Object.assign(cqQ(w,N),{aggs:Object.fromEntries(keys.map(([n,f])=>[n,cqT(f,10)]))})));
+Q.push(cqMk("Aperçu des événements bruts (20 premiers)","Vérifier les valeurs réelles des champs avant d’affiner les requêtes.",ctx.idx,CQ_HIT,Object.assign(cqQ(w,N),{sort:[{"@timestamp":"asc"}]},src?{_source:src}:{})));
+const bw=[cqRng(ctx.bfrom,ctx.to),...(ent.length?ent:F)];
+Q.push(cqMk("Baseline : volume par jour sur 7 jours",ent.length?"Ces valeurs sont-elles habituelles ? Même entité, tous critères confondus.":"Ce comportement est-il habituel ? Même filtre, 7 jours.",ctx.bidx,CQ_AGG,Object.assign(cqQ(bw,ent.length?[]:N),{aggs:{par_jour:{date_histogram:{field:"@timestamp",calendar_interval:"day"}}}})));
+return{Q,unsup:crit.u}}
+
+/* Pivot sur une entité (compte, IP, hôte) selon le format d’index. */
+function cqEntity(fam,type,v,ctx){const Q=[],w=(...x)=>[cqRng(ctx.pfrom,ctx.to),...x],I=ctx.pidx,A=CQ_AD,C=CQ_CEF;let ec=null;
+if(fam=="ad"){
+ if(type=="user"){ec=cqTerm(A.user,v);
+  Q.push(cqMk("Postes d’authentification NTLM du compte (4776)","Depuis quelles machines ce compte est-il validé ? Un poste inhabituel est un indice de mouvement latéral.",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4776"),ec)),{aggs:{poste:cqT(A.ws,5)}})));
+  Q.push(cqMk("Échecs d’authentification par IP source (4625)","Origine et motif (Status) des échecs : force brute, mot de passe périmé, compte désactivé.",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4625"),ec)),{aggs:{ip_source:cqT(A.ip,10,{statut:cqT(A.st,5)})}})));
+  Q.push(cqMk("Ouvertures de session par type et IP source (4624)","Types 3 (réseau) et 10 (RDP) depuis une IP inhabituelle après des échecs : à examiner en priorité.",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4624"),ec)),{aggs:{type_session:cqT(A.lt,10,{ip_source:cqT(A.ip,5)})}})));
+  Q.push(cqMk("Kerberos : TGT et TGS par IP source (4768, 4769)","Demandes de tickets pour ce compte. L’IP peut être au format ::ffff:a.b.c.d.",I,CQ_AGG,Object.assign(cqQ(w(cqTerms(A.id,["4768","4769"]),ec)),{aggs:{evenement:cqT(A.id,5,{ip_source:cqT(A.ip,5)})}})));
+  Q.push(cqMk("Verrouillages du compte (4740)","Machine à l’origine des verrouillages (TargetDomainName = Caller Computer Name pour 4740).",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4740"),ec)),{aggs:{machine_source:cqT(A.dom,5)}})));
+  Q.push(cqMk("Modifications du compte (4720, 4722–4726, 4738)","Qui a créé, activé, réinitialisé, désactivé ou modifié ce compte.",I,CQ_AGG,Object.assign(cqQ(w(cqTerms(A.id,["4720","4722","4723","4724","4725","4726","4738"]),ec)),{aggs:{evenement:cqT(A.id,10,{auteur:cqT(A.subj,5)})}})));
+ }else if(type=="ip"){ec=cqTerm(A.ip,v);
+  Q.push(cqMk("Comptes visés depuis l’IP : échecs (4625)","Une IP qui teste plusieurs comptes évoque un password spraying.",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4625"),ec)),{aggs:{compte:cqT(A.user,10,{statut:cqT(A.st,5)})}})));
+  Q.push(cqMk("Comptes visés depuis l’IP : succès (4624)","Un succès après des échecs, depuis la même IP, doit être traité comme une compromission possible.",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4624"),ec)),{aggs:{compte:cqT(A.user,10,{type_session:cqT(A.lt,5)})}})));
+ }else{ec=cqTerm(A.host,v);
+  Q.push(cqMk("Événements par identifiant sur l’hôte","Profil d’activité de la machine (valeur exacte du champ, souvent le FQDN).",I,CQ_AGG,Object.assign(cqQ(w(ec)),{aggs:{evenement:cqT(A.id,15)}})));
+  Q.push(cqMk("Ouvertures de session par compte et type (4624)","Qui se connecte sur cet hôte et comment.",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4624"),ec)),{aggs:{compte:cqT(A.user,10,{type_session:cqT(A.lt,5)})}})));
+  Q.push(cqMk("Échecs d’authentification par IP source (4625)","Sources des tentatives contre cet hôte.",I,CQ_AGG,Object.assign(cqQ(w(cqTerm(A.id,"4625"),ec)),{aggs:{ip_source:cqT(A.ip,10)}})));
+ }
+}else if(fam=="cef"){
+ if(type=="ip"){ec=cqShould([C.src,C.dst],v);
+  Q.push(cqMk("Communications de l’IP : sources, destinations, ports, actions","Vue d’ensemble du trafic impliquant cette adresse, côté source ou destination.",I,CQ_AGG,Object.assign(cqQ(w(ec)),{aggs:{sources:cqT(C.src,10),destinations:cqT(C.dst,10),ports:cqT(C.port,10),actions:cqT(C.act,5)}})));
+  Q.push(cqMk("Volume sortant par source (bytesOut)","Mesurer ce qui a réellement été envoyé : indice d’exfiltration.",I,CQ_AGG,Object.assign(cqQ(w(ec)),{aggs:{par_source:cqT(C.src,10,{octets:{sum:{field:C.bytes}}})}})));
+  Q.push(cqMk("URL demandées (requestURL)","Domaines et chemins contactés, utiles pour qualifier un site suspect.",I,CQ_AGG,Object.assign(cqQ(w(ec)),{aggs:{urls:cqT(C.url,10)}})));
+ }else if(type=="user"){ec=cqShould([C.su,C.du],v);
+  Q.push(cqMk("Activité du compte : sources, destinations, actions","Où et vers quoi ce compte est actif.",I,CQ_AGG,Object.assign(cqQ(w(ec)),{aggs:{sources:cqT(C.src,10),destinations:cqT(C.dst,10),actions:cqT(C.act,5)}})));
+ }
+}else if(ctx.fld){ec=cqTerm(ctx.fld,v)}
+if(ec)Q.push(cqMk("Première et dernière occurrence (30 jours)","L’entité est-elle nouvelle dans l’environnement ? Motif d’index générique, plage de 30 jours.",ctx.idx30,CQ_VAL,Object.assign(cqQ([cqRng(ctx.f30,ctx.to),ec]),{aggs:{premier:{min:{field:"@timestamp"}},dernier:{max:{field:"@timestamp"}}}})));
+return Q}
+
+function cqBuild(a,st){const fam=cqFam(a),off=+st.off||0,notes=[];let f=cqTime(a.first,off),l=cqTime(a.last,off);
+if(isNaN(f)||isNaN(l)){const h=a.win?(+a.win.split(":")[0]||4):4;l=Date.now();f=l-h*36e5;notes.push("Heures de l’alerte absentes : fenêtre des "+h+" dernières heures à partir de maintenant.")}
+const from=f-36e5,to=l+36e5,ctx={from,to,bfrom:f-7*864e5,pfrom:f-864e5,f30:f-30*864e5,fld:a.fld};
+const i1=cqIdx(a.idx,from,to),ib=cqIdx(a.idx,ctx.bfrom,to),ip=cqIdx(a.idx,ctx.pfrom,to),i30=cqIdx(a.idx,ctx.f30,to);
+ctx.idx=i1.list;ctx.bidx=ib.list;ctx.pidx=ip.list;ctx.idx30=/[*,]/.test(a.idx||"")||i30.list[0]=="<INDEX>"?i30.list:[(a.idx||"").replace(/-\d{4}\.\d{2}\.\d{2}$/,"")+"-*"];
+if(i1.note)notes.push(i1.note);
+const r=cqRule(a,fam,{},ctx);if(r.unsup)notes.push("Critère non converti (opérateur ou OR) : complétez les filtres à la main.");
+const ent=st.ent&&st.ent.trim()?cqEntity(fam,st.type,st.ent.trim(),ctx):[];
+if(!ent.length&&st.ent&&st.ent.trim())notes.push("Pas de modèle prêt pour ce format d’index et ce type d’entité : utilisez les requêtes issues de l’alerte.");
+return{fam,notes,rule:r.Q,ent,from,to}}
+
+function conHtml(a){const g=cqGuess(a);return `<p class="mu">À coller dans Kibana, Dev Tools (Console). Index journaliers déduits de la ligne <code>Index:</code> de l’alerte, plage de la première à la dernière occurrence ±1 h, <code>size=0</code> et <code>filter_path</code> pour ne renvoyer que les agrégats. Les champs sont ceux de la règle ou les noms ECS usuels (winlog.*, CEF) : à adapter à votre mapping.</p>
+<div class="qr-toolbar cq-ctl"><label class="sl">Décalage de l’heure de l’alerte (h par rapport à UTC)<input id="cq-off" type="number" step="1" min="-12" max="14" value="0"></label><label class="sl">Entité à pivoter<select id="cq-type">${CQ_TYPES.map(([k,t])=>`<option value="${k}"${k==g.type?" selected":""}>${t}</option>`).join("")}</select></label><label class="sl"><span class="mu">Valeur</span><input id="cq-ent" value="${esc(g.val)}" placeholder="Administrateur, 10.0.0.5, SRV01…"></label><button class="btn g" type="button" id="cq-all">Copier toutes les requêtes</button></div>
+<p class="mu sm" id="cq-note" role="status"></p><div id="cq-out"></div>`}
+function conRender(){const A=AW,c=A.con,a=A.a;if(!c)return;const B=cqBuild(a,c),sec=(t,Q,h)=>Q.length?`<h3 style="margin-top:14px">${t}</h3>`+Q.map(q=>{const i=A.cq.push(q)-1;return `<div class="cq-q"><div class="xh"><h4>${esc(q.t)}</h4><button class="btn g sm" type="button" data-cq="${i}">Copier</button></div><p class="mu sm">${esc(q.why)}</p>${pre(q.text)}</div>`}).join(""):"";
+A.cq=[];const tl=(CQ_TYPES.find(x=>x[0]==c.type)||[])[1]||"";
+$("#cq-out").innerHTML=sec("Issues de l’alerte (famille d’index : "+({ad:"Active Directory / Windows",cef:"CEF",gen:"générique"})[B.fam]+")",B.rule)+sec("Pivot sur l’entité : "+esc(tl.toLowerCase())+" "+esc(c.ent||"(à renseigner)")+" — de 24 h avant la première occurrence à 1 h après la dernière",B.ent);
+$("#cq-note").textContent=B.notes.join(" ")+(B.notes.length?" ":"")+"Plage UTC : "+cqIso(B.from)+" → "+cqIso(B.to)+"."}
+function conInit(a){const g=cqGuess(a);AW.con={off:0,type:g.type,ent:g.val};AW.cq=[];
+const sync=()=>{AW.con={off:+$("#cq-off").value||0,type:$("#cq-type").value,ent:$("#cq-ent").value};conRender()};
+["#cq-off","#cq-type","#cq-ent"].forEach(s=>{$(s).oninput=sync;$(s).onchange=sync});
+const say=t=>{$("#cq-note").textContent=t},cp=async t=>{try{await navigator.clipboard.writeText(t);say("Copié dans le presse-papiers.")}catch(e){say("Copie indisponible dans ce navigateur : sélectionnez le texte manuellement.")}};
+$("#cq-all").onclick=()=>cp(AW.cq.map(q=>"# "+q.t+"\n"+q.text).join("\n\n"));
+$("#cq-out").onclick=e=>{const b=e.target.closest("[data-cq]");if(b)cp(AW.cq[+b.dataset.cq].text)};
+conRender()}
+$("#ad2").onclick=()=>{$("#at").value=`Rule "X| NTLM Validation Administrateur" has generated 38 events in the last 1:00:00.\nIndex: customerlog-talentys-X-ad\nRule name: X| NTLM Validation Administrateur\nRule severity: High\nRule description: Tactic: Credential Access (TA0006) Technique: Brute Force (T1110). Plusieurs validations NTLM du compte Administrateur depuis des postes inhabituels.\nDetection criteria: winlog.event_id IS "4776" AND winlog.event_data.TargetUserName IS "Administrateur"\nField to investigate: winlog.event_data.TargetUserName\nTargetUserNames Involved: (1)\n------------------------------\nAdministrateur\nFirst event time: 2026-11-17 14:02:11\nLast event time: 2026-11-17 14:58:40`;aw()};
 /* ================= DELFOS v2 · 1. Détection multi-format et normalisation ================= */
 const FMT={xml:"Windows XML (EventData)",sysxml:"Sysmon XML",json:"JSON / ECS / Sentinel",aad:"Entra ID (journaux de connexion)",wtxt:"Windows texte (Observateur, EN)",wfr:"Windows texte (Observateur, FR)",sysmon:"Sysmon texte",cef:"CEF",leef:"LEEF (QRadar)",iis:"Accès web IIS (W3C)",web:"Accès web Apache / Nginx",ssh:"Syslog Linux · sshd",sudo:"Syslog Linux · sudo / su",lnx:"Syslog Linux",kv:"Clé=valeur sur une ligne",fgt:"FortiGate syslog",win:"Clé=valeur (multi-lignes)",txt:"Texte libre"};
 const MON="Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
