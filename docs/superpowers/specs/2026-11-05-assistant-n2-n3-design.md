@@ -155,3 +155,19 @@ Mis à jour :
 3. Le champ « Field to investigate » est lu en entier même avec des points (il était tronqué à `winlog`), et les valeurs impliquées (comptes, hôtes) sont lues en plus des IP.
 
 **Limites.** Les requêtes sont générées, **pas exécutées** : aucun cluster Elasticsearch n'a été interrogé. Les noms de champs (`winlog.*` usuels, CEF) et le type des champs (`keyword` ou `ip`) dépendent de votre mapping ; un CIDR dans `terms` n'est valable que sur un champ de type `ip`. Les requêtes valident comme JSON et leur structure suit l'exemple fourni.
+
+## 13. Extension (2026-11-18) : analyse du résultat d'une requête console dans l'Investigation
+
+**Demande.** L'Investigation doit pouvoir analyser le résultat du `GET` exécuté depuis l'Alert Workflow.
+
+**Parcours.** Dans chaque requête console de l'Alert Workflow, un bouton « Analyser le résultat » ouvre l'Investigation avec un bandeau (alerte, requête attendue). L'analyste colle la réponse de Dev Tools et clique sur « Analyser » : le texte est reconnu automatiquement, sans changer l'analyse des journaux existante.
+
+**Formats reconnus.** Réponse `_search` en **YAML** (`format=yaml`) ou en **JSON** (y compris compact sur une ligne) ; plusieurs résultats collés à la suite (séparés par `---` ou objets JSON successifs) ; corps de requête JSON collé avant le résultat (ignoré, signalé) ; lignes `GET …` et commentaires `#` ignorés. Un texte illisible produit un message d'erreur, jamais une exception. Un journal ordinaire contenant « hits: » n'est pas détourné (la détection exige une structure Elasticsearch valide).
+
+**Lecteur YAML.** Sous-ensemble écrit pour la sortie d'Elasticsearch (mappings, séquences au même retrait que leur clé, guillemets, échappements, blocs `|`/`>`, nombres en notation scientifique, `[]`/`{}`, `null`). Vérifié identique à PyYAML sur 11 échantillons au style Jackson.
+
+**Analyse (règles déterministes, locales).** Reconnaissance du rôle de chaque agrégation par son nom (poste, compte, ip_source, statut, type_session, ports, actions, urls, volume, par_jour, premier/dernier…) ou par la forme des valeurs. Constats classés High / Medium / Info : IP publiques (étiquetées), sources nombreuses et diffuses, concentration, noms de machines évoquant un outil d'attaque ou par défaut, machines rares, comptes à privilèges, statuts d'échec NT décodés (mots de passe incorrects, comptes inexistants, verrouillés), types de session (8 et 9, sessions 3/10 depuis une IP publique), événements de gestion de compte, ports sensibles, trafic autorisé ou bloqué, URL suspectes, volume sortant (Medium à 10 Mo, High à 500 Mo), forme de la série temporelle (cadence régulière, pic isolé), baseline par jour, première et dernière occurrence comparées au début de l'alerte, écart avec le nombre d'événements annoncé par la règle (indice de mauvais index, plage ou fuseau). Les seuils sont des heuristiques à ajuster.
+
+**Rendu et suites.** Verdict provisoire, constats, tableau par agrégation (part, décodage, sous-agrégations), graphiques de séries, échantillon d'événements avec renvoi vers le moteur de détection, **pivots suivants** (requêtes Dev Tools générées avec l'index et la plage de l'alerte : IP publique, compte, poste rare), copie de la synthèse Markdown, enregistrement dans le journal du dossier (type `es`), onglets Reports et IOC alimentés. Le bouton « Demander à l'assistant » (sur demande, avec les résultats résumés, les constats et le dossier ouvert) reprend les garde-fous de l'assistant existant (faits / hypothèses / non vérifié, données non fiables, aucune action exécutée).
+
+**Limites.** Aucune réponse Elasticsearch réelle n'a été testée : les échantillons suivent le format produit avec `format=yaml`. Les agrégats orientent l'investigation mais ne prouvent pas une compromission. Les parts sont calculées sur les valeurs retournées (le `size` de la requête borne l'échantillon).
